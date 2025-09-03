@@ -7,8 +7,13 @@
 #ifndef UI_H
 #define UI_H
 /* Includes ------------------------------------------------------------------*/
+#ifndef SIMULATOR
 #include <Arduino.h>
-
+#else
+#include <string>
+#include <cstdint>
+using String = std::string; //todo
+#endif
 
 /* Exported defines and constants --------------------------------------------*/
 
