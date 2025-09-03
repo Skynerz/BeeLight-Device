@@ -1,38 +1,29 @@
-#include <Arduino.h>
-#include <esp_display_panel.hpp>
-#include "lvgl_v8_port.h"
 
 #include "ui/ui.h"
-#include "ble/ble_config.h"
+#include <lvgl.h>
+#include "port.hpp"
 
-using namespace esp_panel::drivers;
-using namespace esp_panel::board;
 using namespace std;
 
-
-void setup()
+static void loop()
 {
-    Serial.begin(115200);
-    Serial.println("Initializing board");
-    Board *board = new Board();
-    board->init();
-    assert(board->begin());
-
-    Serial.println("Initializing LVGL");
-    lvgl_port_init(board->getLCD(), board->getTouch());
-
-    Serial.println("Creating UI");
-    /* Lock the mutex due to the LVGL APIs are not thread-safe */
-    lvgl_port_lock(-1);
-
-    ui_init();
-    ble_init();
-
-    /* Release the mutex */
-    lvgl_port_unlock();
+    while (1)
+    {
+        uint32_t delay = lv_timer_handler();
+        if (delay < 1)
+            delay = 1; /*delay for at least 1 ms*/
+        else if (delay == LV_NO_TIMER_READY)
+            delay = LV_DEF_REFR_PERIOD; /*handle LV_NO_TIMER_READY. Another option is to `sleep` for longer*/
+        _usleep(delay * 1000);
+    }
 }
 
-void loop()
+int main(void)
 {
-    delay(1000);
+    lv_init();
+    setup();
+    loop();
+    lv_deinit();
+
+    return EXIT_SUCCESS;
 }
