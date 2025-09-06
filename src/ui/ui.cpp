@@ -1,5 +1,7 @@
 #include "ui.h"
 #include <lvgl.h>
+#include "extra/libs/png/lv_png.h"
+
 #include "CurvedLabel.h"
 #include "res/beelight_logo.c"
 
@@ -12,6 +14,9 @@ static lv_obj_t *directionLabel;
 static lv_obj_t *directionDistanceLabel;
 
 static lv_obj_t *connectionStateLabel;
+static lv_obj_t *directionIcon;
+static lv_img_dsc_t directionIconPng;
+static uint8_t *iconCopy = nullptr;
 
 static lv_style_t curvedLabelStyle;
 static lv_style_t timeStyle;
@@ -30,7 +35,8 @@ void init_styles() {
 }
 
 void ui_init() {
-    // lv_scr_col lv_scr_act();
+    // Initialize PNG decoder
+    lv_png_init();
 
     init_styles();
 
@@ -51,7 +57,7 @@ void ui_init() {
     edaLabel.setStyle(&curvedLabelStyle);
 
     // Direction Icon
-    lv_obj_t *directionIcon = lv_img_create(lv_scr_act());
+    directionIcon = lv_img_create(lv_scr_act());
     lv_img_set_src(directionIcon, &beelight_logo_inv);
     // lv_img_set_size_mode(directionIcon, LV_IMG_SIZE_MODE_REAL);
     lv_obj_set_size(directionIcon, 160, 160);
@@ -108,11 +114,43 @@ void setDirectionDistance(const String direction) {
     lv_label_set_text(directionDistanceLabel, direction.c_str());
 }
 
+// void copy_and_invert_colors_rgba(uint8_t* bufIn, uint8_t* bufOut, uint32_t px_cnt) {
+//     for(uint32_t i = 0; i < px_cnt; i++) {
+//         bufOut[4*i + 0] = 255 - bufIn[4*i + 0]; // R
+//         bufOut[4*i + 1] = 255 - bufIn[4*i + 1]; // G
+//         bufOut[4*i + 2] = 255 - bufIn[4*i + 2]; // B
+//     }
+// }
+
 void setDirectionIcon(const uint8_t *iconData, size_t iconSize) {
-    // lv_img_set_src(directionIcon, iconData);
-    // lv_img_set_src(directionLabel, iconData);
-    // lv_img_set_size_mode(directionLabel, LV_IMG_SIZE_MODE_REAL);
-    // lv_img_set_zoom(directionLabel, 330);
+
+    // Libérer l'ancien buffer si existant
+    delete[] iconCopy;
+
+    // Allouer et copier
+    iconCopy = new uint8_t[iconSize];
+    memcpy(iconCopy, iconData, iconSize);
+    // copy_and_invert_colors_rgba((uint8_t*)iconData, iconCopy, iconSize / 4);
+
+    // Remplir le descripteur
+    directionIconPng.header.always_zero = 0;
+    directionIconPng.header.w = 0;
+    directionIconPng.header.h = 0;
+    directionIconPng.header.cf = LV_IMG_CF_RAW;
+    directionIconPng.data_size = iconSize;
+    directionIconPng.data = iconCopy;
+
+    // DEBUG ----------------------------------------------------------------------
+    // Serial.printf("Icon updated, size: %u bytes\n", directionIconPng.data_size);
+    // for(uint16_t i = 0; i < directionIconPng.data_size; i++) {
+    //     Serial.printf("%02X ", iconCopy[i]);
+    // }
+    // DEBUG ----------------------------------------------------------------------
+
+    // Mise à jour dans le contexte LVGL
+    lv_async_call([](void *) {
+        lv_img_set_src(directionIcon, &directionIconPng);
+    }, nullptr);
 }
 
 void setConnected(const bool connected) {
@@ -125,4 +163,5 @@ void clearData() {
     lv_label_set_text(directionLabel, "");
     lv_label_set_text(directionDistanceLabel, "");
     lv_label_set_text(connectionStateLabel, "Disc.");
+    lv_img_set_src(directionLabel, &beelight_logo_inv); 
 }

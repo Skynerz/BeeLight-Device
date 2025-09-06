@@ -4,14 +4,23 @@
 #include <BLEUtils.h>
 #include <BLEServer.h>
 
-// TODO Refactor
+// TODO Refactor to avoid direct dependency on UI
 #include "ui/ui.h"
 
-BLEServer *pServer = nullptr;
+#define MAX_IMG_SIZE 16384  // prévoir assez large pour ton PNG 126x126
 
+// BLE global variables
+BLEServer *pServer = nullptr;
 bool deviceConnected = false;
 
-class BeelightServerCallbacks : public BLEServerCallbacks {
+static uint8_t img_buf[MAX_IMG_SIZE];
+static size_t img_len = 0;
+static size_t expected_size = 0;
+static bool receiving_img = false;
+// END TODO
+
+// Connection events callbacks
+class BeelightServerConnectionCallbacks : public BLEServerCallbacks {
     void onConnect(BLEServer *pServer) override {
         deviceConnected = true;
         Serial.println("📱 Connected");
@@ -28,6 +37,7 @@ class BeelightServerCallbacks : public BLEServerCallbacks {
     }
 };
 
+// Security connections Calbacks
 class BeelightSecurityCallbacks : public BLESecurityCallbacks {
     bool onConfirmPIN(uint32_t pin) override {
         Serial.printf("PIN: %06u\n", pin);
@@ -54,7 +64,7 @@ class BeelightSecurityCallbacks : public BLESecurityCallbacks {
     }
 };
 
-
+// Init security with callbacks
 void ble_init_security() {
     BLESecurity *pSecurity = new BLESecurity();
     pSecurity->setAuthenticationMode(ESP_LE_AUTH_BOND);
@@ -63,21 +73,44 @@ void ble_init_security() {
     BLEDevice::setSecurityCallbacks(new BeelightSecurityCallbacks());
 }
 
+// Start advertising
+void ble_start_advertising() {
+        // --- Advertising ---
+    BLEAdvertising *advertising = BLEDevice::getAdvertising();
+
+    BLEAdvertisementData *advData = new BLEAdvertisementData();
+    advData->setName(DEVICE_NAME);
+    advData->setAppearance(DEVICE_APPEARANCE);
+    advData->setFlags(ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT);
+
+    advertising->setAdvertisementData(*advData);
+
+    advertising->addServiceUUID(SERVICE_UUID_GENERIC);
+    advertising->addServiceUUID(SERVICE_UUID_NAVIGATION);
+    advertising->setScanResponse(true);
+    advertising->setScanResponseData(*advData);
+
+    advertising->start();
+    Serial.println("BLE Advertising started");
+}
+
+// Init BLE service
 void ble_init() {
     BLEDevice::init(DEVICE_NAME);
 
     ble_init_security();
 
     pServer = BLEDevice::createServer();
-    pServer->setCallbacks(new BeelightServerCallbacks());
+    pServer->setCallbacks(new BeelightServerConnectionCallbacks());
 
     // --- Generic Service ---
     BLEService *genericService = pServer->createService(SERVICE_UUID_GENERIC);
 
-
     /// CURRENT TIME -----------------------------------------------------------------------
     BLECharacteristic *currentTime = genericService->createCharacteristic(CHARAC_UUID_TIME, BLECharacteristic::PROPERTY_WRITE);
     currentTime->setValue("00:00");
+
+    // Callback definition 
     class CurrentTimeCallback : public BLECharacteristicCallbacks {
         void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
             Serial.printf("Rxed Current Time: %s\n", pCharacteristic->getValue().c_str());
@@ -100,6 +133,8 @@ void ble_init() {
     /// ESTIMATED TIME REMAINING BEFORE ARRIVAL -------------------------------------------
     BLECharacteristic *charEta = navService->createCharacteristic(CHARAC_UUID_ETA, BLECharacteristic::PROPERTY_WRITE);
     charEta->setValue("Remain. time");
+
+    // Callback definition 
     class RemainingTimeBeforeArrivalCallback : public BLECharacteristicCallbacks {
         void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
             Serial.printf("Rxed ETA: %s\n", pCharacteristic->getValue().c_str());
@@ -117,6 +152,8 @@ void ble_init() {
     /// ESTIMATED DISTANCE BEFORE ARRIVAL -------------------------------------------------
     BLECharacteristic *charEda = navService->createCharacteristic(CHARAC_UUID_EDA, BLECharacteristic::PROPERTY_WRITE);
     charEda->setValue("Remain. dist");
+
+    // Callback definition 
     class RemainingDistanceBeforeArrivalCallback : public BLECharacteristicCallbacks {
         void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
             Serial.printf("Rxed EDA: %s\n", pCharacteristic->getValue().c_str());
@@ -154,6 +191,8 @@ void ble_init() {
     /// NEXT INSTRUCTION ------------------------------------------------------------------
     BLECharacteristic *charInstruction = navService->createCharacteristic(CHARAC_UUID_INSTRUCTION, BLECharacteristic::PROPERTY_WRITE);
     charInstruction->setValue("Instruction");
+
+    // Callback definition 
     class NextInstructionCallback : public BLECharacteristicCallbacks {
         void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
             Serial.printf("Rxed instruction: %s\n", pCharacteristic->getValue().c_str());
@@ -171,6 +210,8 @@ void ble_init() {
     /// NEXT INSTRUCTION DISTANCE ------------------------------------------------------------------
     BLECharacteristic *charInstructionDistance = navService->createCharacteristic(CHARAC_UUID_INSTRUCTION_DISTANCE, BLECharacteristic::PROPERTY_WRITE);
     charInstructionDistance->setValue("Instruction Distance");
+
+    // Callback definition 
     class NextInstructionDistanceCallback : public BLECharacteristicCallbacks {
         void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
             Serial.printf("Rxed instruction dist: %s\n", pCharacteristic->getValue().c_str());
@@ -186,39 +227,52 @@ void ble_init() {
     charInstructionDistance->setCallbacks(new NextInstructionDistanceCallback());
 
     /// NEXT INSTRUCTION ICON -------------------------------------------------------------
-    // BLECharacteristic *charIcon = navService->createCharacteristic(CHARAC_UUID_INSTRUCTION_ICON, BLECharacteristic::PROPERTY_WRITE);
-    // charIcon->setValue((uint8_t *)"ICONDATA", 8);  // Remplacer par tes données binaires
-    // class NextInstructionIconCallback : public BLECharacteristicCallbacks {
-    //     void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
-    //         Serial.println("Rxed instruction icon");
-    //         String value = pCharacteristic->getValue();
-    //         if (value.length() > 0) {
-    //             Serial.println("Instruction Icon Set");
-    //             setDirectionIcon((const uint8_t *)value.c_str(), 126);
-    //         } else {
-    //             Serial.println("Rxed empty instruction icon value");
-    //         }
-    //     }
-    // };
-    // charIcon->setCallbacks(new NextInstructionIconCallback());
+    BLECharacteristic *charIcon = navService->createCharacteristic(CHARAC_UUID_INSTRUCTION_ICON, BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_READ);
+    charIcon->setValue("Icon data");
+
+    // Callback definition 
+    class NextInstructionIconCallback : public BLECharacteristicCallbacks {
+        void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
+            uint8_t* value = param->write.value;
+            uint16_t dataLength = param->write.len;
+            
+            // On first packet on this characteristic, the content corresponds to the size (4 bytes little endian)
+            if(!receiving_img) {
+                receiving_img = true;
+                expected_size = pCharacteristic->getValue().toInt();
+                img_len = 0;
+
+            // On next packets, we receive the actual data
+            } else {
+                // Add data to buffer
+                memcpy(&img_buf[img_len], value, dataLength);
+                img_len += dataLength;
+
+                // DEBUG -----------------------------------------------------------------------------
+                // Debug: print received data as hex
+                // for (uint8_t i = 0; i < dataLength; i++)
+                // {
+                //     Serial.printf("%02X", &img_buf[img_len-dataLength+i]);
+                // }
+                // Serial.println();
+                // Serial.printf("Received %d bytes, total %d/%d\n", dataLength, img_len, expected_size);
+                // DEBUG -----------------------------------------------------------------------------
+
+                // If we have received the full image, display it
+                if(img_len >= expected_size) {
+                    // Serial.println("PNG complete, displaying...");
+                    setDirectionIcon(img_buf, img_len);
+
+                    receiving_img = false;
+                    img_buf[0] = 0; // Clear buffer
+                    img_len = 0;
+                    expected_size = 0;
+                }
+            }
+        }
+    };
+    charIcon->setCallbacks(new NextInstructionIconCallback());
 
     navService->start();
-
-    // --- Advertising ---
-    BLEAdvertising *advertising = BLEDevice::getAdvertising();
-
-    BLEAdvertisementData *advData = new BLEAdvertisementData();
-    advData->setName(DEVICE_NAME);
-    advData->setAppearance(DEVICE_APPEARANCE);
-    advData->setFlags(ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT);
-
-    advertising->setAdvertisementData(*advData);
-
-    advertising->addServiceUUID(SERVICE_UUID_GENERIC);
-    advertising->addServiceUUID(SERVICE_UUID_NAVIGATION);
-    advertising->setScanResponse(true);
-    advertising->setScanResponseData(*advData);
-
-    advertising->start();
-    Serial.println("BLE Advertising started");
+    ble_start_advertising();
 }
