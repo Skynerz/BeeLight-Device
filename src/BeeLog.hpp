@@ -1,5 +1,5 @@
 #ifndef BEELOG_HPP
-#define BEELOP_HPP
+#define BEELOG_HPP
 
 #include <string>
 
@@ -15,17 +15,17 @@ public:
 
     void debug(std::string message)
     {
-        debug(tag_m, message);
+        BeeLog::debug(tag_m, message);
     }
 
     void info(std::string message)
     {
-        info(tag_m, message);
+        BeeLog::info(tag_m, message);
     }
 
     void error(std::string message)
     {
-        error(tag_m, message);
+        BeeLog::error(tag_m, message);
     }
 
 private:

@@ -19,7 +19,7 @@ set(CONFIG_LV_BUILD_EXAMPLES On) #attention a ne pas l'utiliser dans la partie e
 
 if(SIMULATOR)
     message("SIMULATOR BUILD")
-    set(CUSTOM_DEFS "-DSIMULATOR ")
+    set(CUSTOM_DEFS "-DSIMULATOR")
     # set_property(GLOBAL PROPERTY HAS_PARENT_SCOPE true)
     add_subdirectory(sim)
     set(ADDITIONAL_INCLUDES sim)
