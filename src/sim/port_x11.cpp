@@ -1,7 +1,6 @@
-#include <lvgl.h>
+#include "BeelightApp.hpp"
 #include "port.hpp" 
 #include "BeeLog.hpp"
-#include "ui/ui.h"
 #include <unistd.h> //todo windows alt
 
 #define MY_DISP_HOR_RES (int32_t) 360
@@ -25,7 +24,7 @@ void setup() {
     /* Lock the mutex due to the LVGL APIs are not thread-safe */
     lvgl_port_lock(-1);
 
-    ui_init();
+    BeelightApp_init(disp);
 
     /* Release the mutex */
     lvgl_port_unlock();

@@ -1,7 +1,8 @@
 #include "ui.h"
 #include <lvgl.h>
 #include "CurvedLabel.h"
-#include "res/beelight_logo.c"
+#include "Event.hpp"
+#include "model/NavigationModel.hpp"
 
 static lv_obj_t *timeLabel;
 
@@ -16,7 +17,7 @@ static lv_obj_t *connectionStateLabel;
 static lv_style_t curvedLabelStyle;
 static lv_style_t timeStyle;
 
-void init_styles() {
+static void init_styles() {
 
     // Current Time
     lv_style_init(&timeStyle);
@@ -29,14 +30,25 @@ void init_styles() {
     lv_style_set_text_font(&curvedLabelStyle, &lv_font_montserrat_28);
 }
 
+static void updateCurrentTime(lv_event_t* event) {
+    // lv_event_get_param(event);
+    lv_label_set_text(timeLabel, NavigationModel::instance()->getCurrentTime().c_str());
+}
+
+static void updateDirectionDistanceLabel(lv_event_t* event) {
+    lv_label_set_text(timeLabel, NavigationModel::instance()->getRemainingDistanceBeforeNextInstruction().c_str());
+}
+
 void ui_init() {
+    auto navModel = NavigationModel::instance();
     // lv_scr_col lv_scr_act();
 
     init_styles();
 
     // Current Time 
     timeLabel = lv_label_create(lv_scr_act());
-    lv_label_set_text(timeLabel, "12:34");
+    lv_label_set_text(timeLabel, navModel->getCurrentTime().c_str());
+    Event::instance()->connect(timeLabel, NavigationModel::NavigationEvents::EVENT_CURRENT_TIME_UPDATED, &updateCurrentTime);
     lv_obj_align(timeLabel, LV_ALIGN_CENTER, 0, -150);
     lv_obj_add_style(timeLabel, &timeStyle, 0);
 
@@ -51,12 +63,13 @@ void ui_init() {
     edaLabel.setStyle(&curvedLabelStyle);
 
     // Direction Icon
+    LV_IMAGE_DECLARE(beelight_logo_inv);
     lv_obj_t *directionIcon = lv_img_create(lv_scr_act());
     lv_img_set_src(directionIcon, &beelight_logo_inv);
     // lv_img_set_size_mode(directionIcon, LV_IMG_SIZE_MODE_REAL);
     lv_obj_set_size(directionIcon, 160, 160);
     // lv_img_set_zoom(directionIcon, 330);
-    lv_obj_align(directionIcon, LV_ALIGN_CENTER, 0, -40);
+    // lv_obj_align(directionIcon, LV_ALIGN_CENTER, 0, -40);
 
     // Direction label
     directionLabel = lv_label_create(lv_scr_act());
@@ -70,7 +83,8 @@ void ui_init() {
     // Distance next instruction
     directionDistanceLabel = lv_label_create(lv_scr_act());
     lv_obj_set_style_text_align(directionDistanceLabel, LV_TEXT_ALIGN_CENTER, 0);
-    lv_label_set_text(directionDistanceLabel, "100 m");
+    lv_label_set_text(directionDistanceLabel, navModel->getRemainingDistanceBeforeNextInstruction().c_str());
+    Event::instance()->connect(directionDistanceLabel, NavigationModel::NavigationEvents::EVENT_REMAINING_DISTANCE_UPDATED, &updateDirectionDistanceLabel);
     lv_obj_set_style_text_font(directionDistanceLabel, &lv_font_montserrat_30, 0);
     lv_obj_align(directionDistanceLabel, LV_ALIGN_CENTER, 0, 150);
 
@@ -80,6 +94,13 @@ void ui_init() {
     lv_obj_set_style_text_align(connectionStateLabel, LV_TEXT_ALIGN_LEFT, 0);
     lv_obj_set_style_text_font(connectionStateLabel, &lv_font_montserrat_20, 0);
     lv_obj_align(connectionStateLabel, LV_ALIGN_LEFT_MID, 10, 0);
+
+    LV_IMAGE_DECLARE(img_jrbobdobbs);
+    lv_obj_t * img;
+
+    img = lv_image_create(lv_screen_active());
+    lv_image_set_src(img, &img_jrbobdobbs);
+    lv_obj_align(img, LV_ALIGN_CENTER, 0, 0);
 }
 
 void setTime(const String time) {
