@@ -3,15 +3,15 @@
 
 void BeeLog::debug(std::string tag, std::string message)
 {
-    std::cout << "[D]-" << tag << " - " << message;
+    std::cout << "[D]-" << tag << "- " << message << std::endl;
 }
 
 void BeeLog::info(std::string tag, std::string message)
 {
-    std::cout << "[I]-" << tag << " - " << message;
+    std::cout << "[I]-" << tag << "- " << message << std::endl;
 }
 
 void BeeLog::error(std::string tag, std::string message)
 {
-    std::cerr << "[E]-" << tag << " - " << message;
+    std::cerr << "[E]-" << tag << "- " << message << std::endl;
 }
