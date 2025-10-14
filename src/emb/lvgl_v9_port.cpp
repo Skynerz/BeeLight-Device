@@ -8,7 +8,7 @@
 #undef ESP_UTILS_LOG_TAG
 #define ESP_UTILS_LOG_TAG "LvPort"
 #include "esp_lib_utils.h"
-#include "lvgl_v8_port.h"
+#include "lvgl_v9_port.h"
 
 using namespace esp_panel::drivers;
 
@@ -470,22 +470,22 @@ IRAM_ATTR bool onLcdVsyncCallback(void *user_data)
 }
 
 #else
-
-void flush_callback(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_map)
+void flush_callback(lv_display_t *drv, const lv_area_t *area, uint8_t *px_map)
 {
-    LCD *lcd = (LCD *)drv->user_data;
+    LCD *lcd = (LCD *)lv_display_get_driver_data(drv);
     const int offsetx1 = area->x1;
     const int offsetx2 = area->x2;
     const int offsety1 = area->y1;
     const int offsety2 = area->y2;
 
-    lcd->drawBitmap(offsetx1, offsety1, offsetx2 - offsetx1 + 1, offsety2 - offsety1 + 1, (const uint8_t *)color_map);
+    lcd->drawBitmap(offsetx1, offsety1, offsetx2 - offsetx1 + 1, offsety2 - offsety1 + 1, (const uint8_t *)px_map);
     // For RGB LCD, directly notify LVGL that the buffer is ready
     if (lcd->getBus()->getBasicAttributes().type == ESP_PANEL_BUS_TYPE_RGB) {
         lv_disp_flush_ready(drv);
     }
 }
 
+#if 0
 static void update_callback(lv_disp_drv_t *drv)
 {
     LCD *lcd = (LCD *)drv->user_data;
@@ -527,9 +527,9 @@ static void update_callback(lv_disp_drv_t *drv)
     ESP_UTILS_LOGD("Current mirror x: %d, mirror y: %d, swap xy: %d", disp_init_mirror_x, disp_init_mirror_y, disp_init_swap_xy);
 #endif
 }
-
+#endif
 #endif /* LVGL_PORT_AVOID_TEAR */
-
+#if 0
 void rounder_callback(lv_disp_drv_t *drv, lv_area_t *area)
 {
     LCD *lcd = (LCD *)drv->user_data;
@@ -550,14 +550,14 @@ void rounder_callback(lv_disp_drv_t *drv, lv_area_t *area)
         area->y2 = (area->y2 & ~(y_align - 1)) + y_align - 1;
     }
 }
+#endif
 
 static lv_disp_t *display_init(LCD *lcd)
 {
     ESP_UTILS_CHECK_FALSE_RETURN(lcd != nullptr, nullptr, "Invalid LCD device");
     ESP_UTILS_CHECK_FALSE_RETURN(lcd->getRefreshPanelHandle() != nullptr, nullptr, "LCD device is not initialized");
 
-    static lv_disp_draw_buf_t disp_buf;
-    static lv_disp_drv_t disp_drv;
+    static lv_display_t * disp;
 
     // Alloc draw buffers used by LVGL
     auto lcd_width = lcd->getFrameWidth();
@@ -599,6 +599,14 @@ static lv_disp_t *display_init(LCD *lcd)
 #endif
 #endif /* LVGL_PORT_AVOID_TEAR */
 
+#if 1
+    disp = lv_display_create(lcd_width, lcd_height);
+    lv_display_set_flush_cb(disp, flush_callback);
+    lv_display_set_driver_data(disp, (void *)lcd);
+    lv_display_set_buffers(disp, lvgl_buf[0], lvgl_buf[1], buffer_size * sizeof(lv_color_t), LV_DISPLAY_RENDER_MODE_PARTIAL);
+
+    return disp;
+#else
     // initialize LVGL draw buffers
     lv_disp_draw_buf_init(&disp_buf, lvgl_buf[0], lvgl_buf[1], buffer_size);
 
@@ -636,11 +644,12 @@ static lv_disp_t *display_init(LCD *lcd)
     }
 
     return lv_disp_drv_register(&disp_drv);
+#endif
 }
 
-static void touchpad_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *data)
+static void touchpad_read(lv_indev_t *indev_drv, lv_indev_data_t *data)
 {
-    Touch *tp = (Touch *)indev_drv->user_data;
+    Touch *tp = (Touch *) lv_indev_get_driver_data(indev_drv);
     TouchPoint point;
 
     /* Read data from touch controller */
@@ -659,15 +668,16 @@ static lv_indev_t *indev_init(Touch *tp)
     ESP_UTILS_CHECK_FALSE_RETURN(tp != nullptr, nullptr, "Invalid touch device");
     ESP_UTILS_CHECK_FALSE_RETURN(tp->getPanelHandle() != nullptr, nullptr, "Touch device is not initialized");
 
-    static lv_indev_drv_t indev_drv_tp;
+    static lv_indev_t* indev_drv_tp;
 
     ESP_UTILS_LOGD("Register input driver to LVGL");
-    lv_indev_drv_init(&indev_drv_tp);
-    indev_drv_tp.type = LV_INDEV_TYPE_POINTER;
-    indev_drv_tp.read_cb = touchpad_read;
-    indev_drv_tp.user_data = (void *)tp;
+    // lv_indev_init(&indev_drv_tp);
+    indev_drv_tp = lv_indev_create();
+    lv_indev_set_type(indev_drv_tp, LV_INDEV_TYPE_POINTER);
+    lv_indev_set_read_cb(indev_drv_tp, touchpad_read);
+    lv_indev_set_driver_data(indev_drv_tp, (void *)tp);
 
-    return lv_indev_drv_register(&indev_drv_tp);
+    return indev_drv_tp;
 }
 
 #if !LV_TICK_CUSTOM
@@ -728,9 +738,9 @@ static void lvgl_port_task(void *arg)
 
 IRAM_ATTR bool onDrawBitmapFinishCallback(void *user_data)
 {
-    lv_disp_drv_t *drv = (lv_disp_drv_t *)user_data;
+    lv_display_t *disp = (lv_display_t *)user_data;
 
-    lv_disp_flush_ready(drv);
+    lv_disp_flush_ready(disp);
 
     return false;
 }
@@ -750,7 +760,7 @@ bool lvgl_port_init(LCD *lcd, Touch *tp)
     );
 #endif
 
-    lv_disp_t *disp = nullptr;
+    lv_display_t *disp = nullptr;
     lv_indev_t *indev = nullptr;
 
     lv_init();
@@ -762,12 +772,12 @@ bool lvgl_port_init(LCD *lcd, Touch *tp)
     disp = display_init(lcd);
     ESP_UTILS_CHECK_NULL_RETURN(disp, false, "Initialize LVGL display driver failed");
     // Record the initial rotation of the display
-    lv_disp_set_rotation(disp, LV_DISP_ROT_NONE);
+    lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_0);
 
     // For non-RGB LCD, need to notify LVGL that the buffer is ready when the refresh is finished
     if (bus_type != ESP_PANEL_BUS_TYPE_RGB) {
         ESP_UTILS_LOGD("Attach refresh finish callback to LCD");
-        lcd->attachDrawBitmapFinishCallback(onDrawBitmapFinishCallback, (void *)disp->driver);
+        lcd->attachDrawBitmapFinishCallback(onDrawBitmapFinishCallback, (void *) disp);
     }
 
     if (tp != nullptr) {

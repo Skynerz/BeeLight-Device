@@ -1,7 +1,10 @@
 #include "BeeLog.hpp"
+#include <Arduino.h>
 #include <iostream>
 
-void BeeLog::init() {}
+void BeeLog::init() {
+    Serial.begin(115200);
+}
 
 void BeeLog::debug(std::string tag, std::string message)
 {

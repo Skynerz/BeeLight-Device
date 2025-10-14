@@ -4,8 +4,7 @@
 #include <BLEUtils.h>
 #include <BLEServer.h>
 
-// TODO Refactor to avoid direct dependency on UI
-#include "ui/ui.h"
+#include "model/NavigationModel.hpp"
 
 #define MAX_IMG_SIZE 16384  // prévoir assez large pour ton PNG 126x126
 
@@ -108,16 +107,13 @@ void ble_init() {
 
     /// CURRENT TIME -----------------------------------------------------------------------
     BLECharacteristic *currentTime = genericService->createCharacteristic(CHARAC_UUID_TIME, BLECharacteristic::PROPERTY_WRITE);
-    currentTime->setValue("00:00");
-
-    // Callback definition 
     class CurrentTimeCallback : public BLECharacteristicCallbacks {
         void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
             Serial.printf("Rxed Current Time: %s\n", pCharacteristic->getValue().c_str());
             String value = pCharacteristic->getValue();
             if (value.length() > 0) {
                 Serial.printf("Current Time Set: %s\n", value.c_str());
-                setTime(value);
+                NavigationModel::instance()->setCurrentTime(std::string(value.c_str()));
             } else {
                 Serial.println("Rxed empty current time");
             }
@@ -132,16 +128,13 @@ void ble_init() {
 
     /// ESTIMATED TIME REMAINING BEFORE ARRIVAL -------------------------------------------
     BLECharacteristic *charEta = navService->createCharacteristic(CHARAC_UUID_ETA, BLECharacteristic::PROPERTY_WRITE);
-    charEta->setValue("Remain. time");
-
-    // Callback definition 
     class RemainingTimeBeforeArrivalCallback : public BLECharacteristicCallbacks {
         void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
             Serial.printf("Rxed ETA: %s\n", pCharacteristic->getValue().c_str());
             String value = pCharacteristic->getValue();
             if (value.length() > 0) {
                 Serial.printf("ETA set: %s\n", value.c_str());
-                setEta(value);
+                NavigationModel::instance()->setEstTimeBeforeArrival(std::string(value.c_str()));
             } else {
                 Serial.println("Rxed empty ETA");
             }
@@ -151,16 +144,13 @@ void ble_init() {
 
     /// ESTIMATED DISTANCE BEFORE ARRIVAL -------------------------------------------------
     BLECharacteristic *charEda = navService->createCharacteristic(CHARAC_UUID_EDA, BLECharacteristic::PROPERTY_WRITE);
-    charEda->setValue("Remain. dist");
-
-    // Callback definition 
     class RemainingDistanceBeforeArrivalCallback : public BLECharacteristicCallbacks {
         void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
             Serial.printf("Rxed EDA: %s\n", pCharacteristic->getValue().c_str());
             String value = pCharacteristic->getValue();
             if (value.length() > 0) {
                 Serial.printf("EDA Set: %s\n", value.c_str());
-                setEda(value);
+                NavigationModel::instance()->setEstDistanceBeforeArrival(std::string(value.c_str()));
             } else {
                 Serial.println("Rxed empty EDA value");
             }
@@ -173,14 +163,13 @@ void ble_init() {
         CHARAC_UUID_ARRIVING_TIME,
         BLECharacteristic::PROPERTY_WRITE
     );
-    charArrivingTime->setValue("HH:MM");
     class EstimatedArrivingTimeCallback : public BLECharacteristicCallbacks {
         void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
             Serial.printf("Rxed arriving time: %s\n", pCharacteristic->getValue().c_str());
             String value = pCharacteristic->getValue();
             if (value.length() > 0) {
                 Serial.printf("Arriving Time Set: %s\n", value.c_str());
-                setArrivingTime(value);
+                NavigationModel::instance()->setArrivingTime(std::string(value.c_str()));
             } else {
                 Serial.println("Rxed empty  value");
             }
@@ -190,16 +179,13 @@ void ble_init() {
 
     /// NEXT INSTRUCTION ------------------------------------------------------------------
     BLECharacteristic *charInstruction = navService->createCharacteristic(CHARAC_UUID_INSTRUCTION, BLECharacteristic::PROPERTY_WRITE);
-    charInstruction->setValue("Instruction");
-
-    // Callback definition 
     class NextInstructionCallback : public BLECharacteristicCallbacks {
         void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
             Serial.printf("Rxed instruction: %s\n", pCharacteristic->getValue().c_str());
             String value = pCharacteristic->getValue();
             if (value.length() > 0) {
                 Serial.printf("Instruction Set: %s\n", value.c_str());
-                setDirection(value);
+                NavigationModel::instance()->setNextInstruction(std::string(value.c_str()));
             } else {
                 Serial.println("Rxed empty instruction value");
             }
@@ -209,16 +195,13 @@ void ble_init() {
     
     /// NEXT INSTRUCTION DISTANCE ------------------------------------------------------------------
     BLECharacteristic *charInstructionDistance = navService->createCharacteristic(CHARAC_UUID_INSTRUCTION_DISTANCE, BLECharacteristic::PROPERTY_WRITE);
-    charInstructionDistance->setValue("Instruction Distance");
-
-    // Callback definition 
     class NextInstructionDistanceCallback : public BLECharacteristicCallbacks {
         void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
             Serial.printf("Rxed instruction dist: %s\n", pCharacteristic->getValue().c_str());
             String value = pCharacteristic->getValue();
             if (value.length() > 0) {
                 Serial.printf("Instruction dist Set: %s\n", value.c_str());
-                setDirectionDistance(value);
+                NavigationModel::instance()->setRemainingDistanceBeforeNextInstruction(std::string(value.c_str()));
             } else {
                 Serial.println("Rxed empty instruction dist value");
             }
