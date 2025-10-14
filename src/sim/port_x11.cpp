@@ -13,6 +13,7 @@
 
 void setup() {
     BeeLog::debug("init", "Initializing LVGL");
+    lv_init();
     lv_display_t *disp = NULL;
     LV_IMAGE_DECLARE(img_hand_cursor);
 
@@ -37,6 +38,11 @@ void setup() {
 
     /* Release the mutex */
     lvgl_port_unlock();
+}
+
+void tearDown() {
+    lv_deinit();
+    BeeLog::debug("deinit", "Deinitialized LVGL");
 }
 
 void _usleep(uint32_t usecs) {

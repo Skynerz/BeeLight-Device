@@ -7,7 +7,7 @@ using namespace std;
 
 uint8_t run = 1;
 
-static void loop()
+void loop()
 {
     while (run)
     {
@@ -22,10 +22,11 @@ static void loop()
 
 int main(void)
 {
-    lv_init();
     setup();
+#ifdef SIMULATOR
     loop();
-    lv_deinit();
+#endif
+    tearDown();    
 
     return EXIT_SUCCESS;
 }

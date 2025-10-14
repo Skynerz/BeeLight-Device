@@ -6,6 +6,8 @@
 #include "ui/ui.h"
 #ifdef SIMULATOR
 #include "sim/com/BeelightCom_sim.hpp"
+#else
+#include "emb/ble/ble_config.h"
 #endif
 
 void BeelightApp_init() {
@@ -16,7 +18,7 @@ void BeelightApp_init() {
 #ifdef SIMULATOR
     (void) BeelightCom_sim::instance()->init();
 #else
-    //TODO
+    ble_init();
 #endif
     ui_init();
 }

@@ -9,6 +9,7 @@ extern "C" {
 #endif
 
 void setup();
+void tearDown();
 void _usleep(uint32_t usecs);
 extern uint8_t run;
 
