@@ -37,6 +37,4 @@ static uint16_t DEVICE_APPEARANCE = ESP_BLE_APPEARANCE_OUTDOOR_SPORTS_LOCATION_A
 /* Exported function prototypes ----------------------------------------------*/
 void ble_init(void);
 
-
-
 #endif /* BLE_CONFIG_H */
