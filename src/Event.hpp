@@ -31,5 +31,4 @@ private:
     lv_display_t *disp_m;
 };
 
-
 #endif
