@@ -26,18 +26,6 @@ void ui_init();
 
 
 // Setters
-void setTime(const String time);
-
-void setEta(const String eta);
-
-void setEda(const String eda);
-
-void setArrivingTime(const String arrivingTime);
-
-void setDirection(const String direction);
-
-void setDirectionDistance(const String direction);
-
 void setDirectionIcon(const uint8_t *iconData, size_t iconSize);
 
 void setConnected(const bool connected);

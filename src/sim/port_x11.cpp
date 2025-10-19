@@ -48,3 +48,11 @@ void tearDown() {
 void _usleep(uint32_t usecs) {
     usleep(usecs);
 }
+
+uint16_t getScreenWidth() {
+    return MY_DISP_HOR_RES;
+}
+
+uint16_t getScreenHeight() {
+    return MY_DISP_VER_RES;
+}

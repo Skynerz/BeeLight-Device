@@ -6,7 +6,11 @@
 #include "CurvedLabel.h"
 #include "Event.hpp"
 #include "model/NavigationModel.hpp"
+#include "port.hpp"
 
+#ifdef SIMULATOR
+static lv_obj_t* screenBg;
+#endif
 static lv_obj_t *timeLabel;
 
 static CurvedLabel etaLabel;
@@ -60,7 +64,7 @@ static void updateDirection(lv_event_t *event = nullptr)
 
 static void updateDirectionDistanceLabel(lv_event_t *event = nullptr)
 {
-    lv_label_set_text(timeLabel, NavigationModel::instance()->getRemainingDistanceBeforeNextInstruction().c_str());
+    lv_label_set_text(directionDistanceLabel, NavigationModel::instance()->getRemainingDistanceBeforeNextInstruction().c_str());
 }
 
 void ui_init()
@@ -69,7 +73,12 @@ void ui_init()
     // lv_scr_col lv_scr_act();
 
     init_styles();
-
+#ifdef SIMULATOR
+    screenBg = lv_obj_create(lv_scr_act());
+    lv_obj_set_size(screenBg, getScreenWidth(), getScreenHeight());
+    lv_obj_set_style_bg_color(screenBg, lv_color_hex(0xFFFFFF), 0);
+    lv_obj_set_style_radius(screenBg, getScreenWidth() / 2, 0);
+#endif
     // Current Time
     timeLabel = lv_label_create(lv_screen_active());
     updateCurrentTime();
@@ -78,13 +87,15 @@ void ui_init()
     lv_obj_add_style(timeLabel, &timeStyle, 0);
 
     // Estimated Time Arrival section curved label
-    etaLabel = CurvedLabel(lv_screen_active(), 180, 180, 170, 220, 6, true);
+    int centerX = getScreenWidth() / 2;
+    int centerY = getScreenHeight() / 2;
+    etaLabel = CurvedLabel(lv_screen_active(), centerX, centerY, 160, 220, 6, true);
     updateEta();
     Event::instance()->connect(etaLabel.getContainer(), NavigationModel::NavigationEvents::EVENT_EST_TIME_ARRIVAL_UPDATED, &updateEta);
     etaLabel.setStyle(&curvedLabelStyle);
 
     // Estimated Distance Arrival section curved label
-    edaLabel = CurvedLabel(lv_screen_active(), 180, 180, 170, -40, 6, true);
+    edaLabel = CurvedLabel(lv_screen_active(), centerX, centerY, 160, -40, 6, true);
     updateEda();
     Event::instance()->connect(edaLabel.getContainer(), NavigationModel::NavigationEvents::EVENT_EST_DISTANCE_ARRIVAL_UPDATED, &updateEda);
     edaLabel.setStyle(&curvedLabelStyle);
@@ -129,38 +140,6 @@ void ui_init()
     img = lv_image_create(lv_screen_active());
     lv_image_set_src(img, &img_jrbobdobbs);
     lv_obj_align(img, LV_ALIGN_CENTER, 0, 0);
-}
-
-void setTime(const String time)
-{
-    lv_label_set_text(timeLabel, time.c_str());
-}
-
-void setEta(const String eta)
-{
-    etaLabel.setText(eta.c_str());
-}
-
-void setEda(const String eda)
-{
-    edaLabel.setText(eda.c_str());
-}
-
-void setArrivingTime(const String arrivingTime)
-{
-    lv_label_set_text(timeLabel, arrivingTime.c_str());
-}
-
-void setDirection(const String direction)
-{
-
-    lv_label_set_text(directionLabel, direction.c_str());
-}
-
-void setDirectionDistance(const String direction)
-{
-
-    lv_label_set_text(directionDistanceLabel, direction.c_str());
 }
 
 // void copy_and_invert_colors_rgba(uint8_t* bufIn, uint8_t* bufOut, uint32_t px_cnt) {
