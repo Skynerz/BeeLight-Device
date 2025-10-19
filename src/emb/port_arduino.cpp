@@ -20,8 +20,8 @@ void setup()
     ESP_UTILS_CHECK_FALSE_EXIT(board->begin(), "Board begin failed");
     
     logger.info("Initializing LVGL");
-    //LV_COLOR_16_SWAP has been removed, let the hw do it
-    board->getLCD()->invertColor(true);
+    //let the hw invert colors
+    //board->getLCD()->invertColor(true);
     lv_display_t *disp = nullptr;
     lvgl_port_init(board->getLCD(), board->getTouch(), &disp);
 
@@ -29,7 +29,7 @@ void setup()
     /* Lock the mutex due to the LVGL APIs are not thread-safe */
     lvgl_port_lock(-1);
 
-    BeelightApp_init(disp);
+    BeelightApp_init();
 
     /* Release the mutex */
     lvgl_port_unlock();
@@ -41,4 +41,12 @@ void tearDown() {
 
 void _usleep(uint32_t usecs) {
     delay(usecs / 1000);
+}
+
+uint16_t getScreenWidth() {
+    return board->getLCD()->getFrameWidth();
+}
+
+uint16_t getScreenHeight() {
+    return board->getLCD()->getFrameHeight();
 }

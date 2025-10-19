@@ -5,7 +5,7 @@
 #include <BLEServer.h>
 
 #include "model/NavigationModel.hpp"
-
+#include "ui/ui.h"
 #define MAX_IMG_SIZE 16384  // prévoir assez large pour ton PNG 126x126
 
 // BLE global variables
