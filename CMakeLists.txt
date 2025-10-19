@@ -12,6 +12,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_C_FLAGS "-O0 -g")
 
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
+
 # LVGL library
 set(LV_BUILD_CONF_DIR ${SRC_DIR})
 set(CONFIG_LV_BUILD_DEMOS Off)
@@ -48,5 +49,5 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib
 target_link_libraries(${PROJECT_NAME} lvgl)
 
 if(SIMULATOR)
-target_link_libraries(${PROJECT_NAME} X11 lvgl_examples pthread)
+    target_link_libraries(${PROJECT_NAME} X11 lvgl_examples pthread)
 endif()

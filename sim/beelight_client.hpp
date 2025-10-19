@@ -22,8 +22,8 @@ public:
         return socket.state() == QAbstractSocket::ConnectedState;
     }
     bool hello();
-    bool writeVar(const QString& varName, const uint8_t* data, uint16_t len);
-    bool readVar(const QString& varName, uint8_t* data, uint16_t& len);
+    bool writeVar(const QString& varName, const QString& value);
+    bool readVar(const QString& varName, QString& value);
 
     enum ConnectState {
         DISCONNECTED,

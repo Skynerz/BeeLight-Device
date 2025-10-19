@@ -1,4 +1,7 @@
-# project(helloworld VERSION 1.0.0 LANGUAGES CXX)
+if(NOT PROJECT_NAME)
+    cmake_minimum_required(VERSION 3.19)
+    project(beelight-com-sim VERSION 1.0.0 LANGUAGES CXX)
+endif()
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

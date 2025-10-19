@@ -3,6 +3,7 @@
 
 #include <lvgl.h>
 
-void BeelightApp_init(lv_display_t *disp);
+void BeelightApp_init();
+void BeelightApp_deinit();
 
 #endif
