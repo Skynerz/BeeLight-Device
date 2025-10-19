@@ -1,6 +1,5 @@
 #include "beelight_client.hpp"
-
-#define SERVER "localhost"
+#include <qthread.h>
 
 void BeelightClient::connectToDevice()
 {
@@ -13,8 +12,11 @@ void BeelightClient::connectToDevice()
         }
         else
         {
+            qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
+
             emit connectStateChanged(CONNECTING);
-            socket.connectToHost(SERVER, PORT);
+            socket.setSocketOption(QAbstractSocket::KeepAliveOption, 1);
+            socket.connectToHost(INET_ADDR, PORT);
             if (socket.waitForConnected())
             {
                 qint64 bufferSize = socket.readBufferSize();
@@ -26,9 +28,11 @@ void BeelightClient::connectToDevice()
                 {
                     qDebug() << "Connected!";
                     emit connectStateChanged(CONNECTED);
+                    rxEnabled = true;
                     rx_thread = std::thread(&BeelightClient::rxTask, this);
                 }
-                else {
+                else
+                {
                     qDebug() << "Connect error";
                     emit connectStateChanged(DISCONNECTED);
                 }
@@ -45,24 +49,43 @@ void BeelightClient::connectToDevice()
 void BeelightClient::disconnect()
 {
     qDebug() << "Disconnecting";
-    socket.disconnectFromHost();
+    CmdFrame closeFrame{
+        .type = 1,
+        .cmd = CMD_CLOSE,
+        .len = 0,
+    };
+    //close RX first !
     rxEnabled = false;
     rx_thread.join();
+    sendCommand(closeFrame);
+    socket.disconnectFromHost();
     emit connectStateChanged(DISCONNECTED);
 }
 
 bool BeelightClient::hello()
 {
-    socket.write("Hello");
-    if(!socket.waitForReadyRead(5000)) {
+    CmdFrame helloFrame{
+        .type = 1,
+        .cmd = CMD_HELLO,
+        .len = 5,
+    };
+    sprintf(helloFrame.data.write.varName, "Hello", 5);
+    sendCommand(helloFrame);
+    if (!socket.waitForReadyRead(5000))
+    {
         qDebug() << "No response from device";
         return false;
     }
-    socket.read(data, sizeof(data));
-    if(QString(data).startsWith("World")) {
+    qint64 len = socket.read(data, sizeof(CmdFrame));
+    CmdFrame* frame = (CmdFrame *)data;
+    QString tok(frame->data.read.varName);
+    qDebug() << "Hello response: " + tok;   
+    if ((frame->type == 0) && (frame->cmd == CMD_HELLO) && (frame->status == 1) && tok.startsWith("World"))
+    {
         return true;
     }
-    else {
+    else
+    {
         return false;
     }
 }
@@ -72,59 +95,53 @@ void BeelightClient::sendCommand(const CmdFrame &frame)
     socket.write((const char *)&frame, frame.len + 4); // tx+cmd+len+status+data
 }
 
-bool BeelightClient::writeVar(const QString& varName, const uint8_t *data, uint16_t len)
+bool BeelightClient::writeVar(const QString &varName, const QString& value)
 {
+    uint16_t len = value.length();
     if (!isConnected() || len > sizeof(CmdFrame::data.write.data))
     {
         return false;
     }
-    CmdFrame frame{};
-    frame.tx = 1;
+    CmdFrame frame{0};
+    frame.type = 1;
     frame.cmd = CMD_WRITE;
-    frame.len = len;
+    frame.len = len + sizeof(CmdFrame::data.write.varName);
+    
     strncpy(frame.data.write.varName, varName.toStdString().c_str(), sizeof(CmdFrame::data.write.varName));
-    memcpy(frame.data.write.data, data, len);
+    strncpy((char*) frame.data.write.data, value.toStdString().c_str(), sizeof(CmdFrame::data.write.data));
     sendCommand(frame);
 
     CmdFrame response{};
     getAnswer(CMD_WRITE, response);
-    return true;
+    if (response.status == 1 && response.cmd == CMD_WRITE && response.type == 0)
+    {
+        return true;
+    }
+    return false;
 }
 
-bool BeelightClient::readVar(const QString& varName, uint8_t* data, uint16_t& len) {
+bool BeelightClient::readVar(const QString &varName, QString& value)
+{
     CmdFrame frame{};
-    frame.tx = 1;
+    frame.type = 1;
     frame.cmd = CMD_READ;
-    frame.len = 0;
+    frame.len = varName.length();
     strncpy(frame.data.read.varName, varName.toStdString().c_str(), sizeof(CmdFrame::data.read.varName));
     sendCommand(frame);
-    // if (!socket.waitForReadyRead(5000)) {
-    //     qDebug() << "No response from device";
-    //     return false;
-    // }
-    // qint64 n = socket.read((char*)&frame, sizeof(frame));
-    // if (n < 3) {
-    //     qDebug() << "Invalid response from device";
-    //     return false;
-    // }
-    // if (frame.tx != 0 || frame.cmd != CMD_READ) {
-    //     qDebug() << "Invalid response from device";
-    //     return false;
-    // }
-    // if (frame.len > sizeof(frame.data)) {
-    //     qDebug() << "Invalid response length from device";
-    //     return false;
-    // }
-    // if (len < frame.len) {
-    //     qDebug() << "Buffer too small";
-    //     return false;
-    // }
-    // memcpy(data, frame.data.data, frame.len);
-    // len = frame.len;
-    return true;
+
+    CmdFrame response{};
+    getAnswer(CMD_READ, response);
+    if(response.status == 1 && response.cmd == CMD_READ && response.type != 0)
+    {
+        value = QString::fromUtf8((char*)response.data.data, response.len);
+        return true;
+    }
+
+    return false;
 }
 
-bool BeelightClient::getAnswer(Command cmd, CmdFrame &frame) {
+bool BeelightClient::getAnswer(Command cmd, CmdFrame &frame)
+{
     int8_t retries = 5;
     bool found = false;
     do
@@ -139,33 +156,45 @@ bool BeelightClient::getAnswer(Command cmd, CmdFrame &frame) {
                 break;
             }
         }
-        if(!found) {
+        if (!found)
+        {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     } while (retries-- > 0 && !found);
     return found;
 }
 
-void BeelightClient::rxTask() {
-    while(rxEnabled) {
-        if (socket.waitForReadyRead(1000)) {
+void BeelightClient::rxTask()
+{
+    while (rxEnabled)
+    {
+        if (socket.waitForReadyRead(1000))
+        {
             qint64 n = socket.read(data, sizeof(data));
-            if (n > 0) {
+            if (n > 0)
+            {
                 // Process incoming data
-                CmdFrame* frame = (CmdFrame*)data;
-                if (frame->tx == 0) { // response
+                CmdFrame *frame = (CmdFrame *)data;
+                if (frame->type == 0)
+                { // response
                     rxQueue.emplace_back(RxEntry(std::chrono::system_clock::now(), *frame));
                 }
             }
         }
-        for(auto it = rxQueue.begin(); it != rxQueue.end(); ) {
-            auto now = std::chrono::system_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - it->first);
-            if (duration.count() > 10) { // timeout 10 seconds
-                it = rxQueue.erase(it);
-            }
-            else {
-                ++it;
+        if (!rxQueue.empty())
+        {
+            for (auto it = rxQueue.begin(); it != rxQueue.end();)
+            {
+                auto now = std::chrono::system_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - it->first);
+                if (duration.count() > 10)
+                { // timeout 10 seconds
+                    it = rxQueue.erase(it);
+                }
+                else
+                {
+                    ++it;
+                }
             }
         }
     }

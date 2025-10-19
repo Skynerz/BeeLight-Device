@@ -10,6 +10,7 @@ extern "C" {
 
 void setup();
 void _usleep(uint32_t usecs);
+extern uint8_t run;
 
 #ifndef __cplusplus
 }

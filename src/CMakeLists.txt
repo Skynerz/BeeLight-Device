@@ -25,6 +25,7 @@ set(source_files
     PARENT_SCOPE)
 
 set(include_files 
+    ${SRC_DIR}
     ${target_inc} 
     ${ui_inc} 
     ${model_inc}

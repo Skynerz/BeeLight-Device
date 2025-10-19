@@ -1,4 +1,5 @@
 #include "BeelightApp.hpp"
+#include "port.hpp"
 #include "BeeLog.hpp"
 #include "Event.hpp"
 #include "model/NavigationModel.hpp"
@@ -7,10 +8,10 @@
 #include "sim/com/BeelightCom_sim.hpp"
 #endif
 
-void BeelightApp_init(lv_display_t *disp) {
+void BeelightApp_init() {
     BeeLog::debug("BeelightApp", "Initializing Beelight Application");
 
-    (void) Event::instance(disp);
+    (void) Event::instance();
     (void) NavigationModel::instance();
 #ifdef SIMULATOR
     (void) BeelightCom_sim::instance()->init();
@@ -18,4 +19,11 @@ void BeelightApp_init(lv_display_t *disp) {
     //TODO
 #endif
     ui_init();
+}
+
+void BeelightApp_deinit(){
+#ifdef SIMULATOR
+    BeelightCom_sim::instance()->uninit();
+#endif
+    run = 0;
 }

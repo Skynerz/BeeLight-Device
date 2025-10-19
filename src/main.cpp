@@ -5,9 +5,11 @@
 
 using namespace std;
 
+uint8_t run = 1;
+
 static void loop()
 {
-    while (1)
+    while (run)
     {
         uint32_t delay = lv_timer_handler();
         if (delay < 1)
