@@ -71,27 +71,27 @@ void ui_init()
     init_styles();
 
     // Current Time
-    timeLabel = lv_label_create(lv_scr_act());
+    timeLabel = lv_label_create(lv_screen_active());
     updateCurrentTime();
     Event::instance()->connect(timeLabel, NavigationModel::NavigationEvents::EVENT_CURRENT_TIME_UPDATED, &updateCurrentTime);
     lv_obj_align(timeLabel, LV_ALIGN_CENTER, 0, -150);
     lv_obj_add_style(timeLabel, &timeStyle, 0);
 
     // Estimated Time Arrival section curved label
-    etaLabel = CurvedLabel(lv_scr_act(), 180, 180, 170, 220, 6, true);
+    etaLabel = CurvedLabel(lv_screen_active(), 180, 180, 170, 220, 6, true);
     updateEta();
     Event::instance()->connect(etaLabel.getContainer(), NavigationModel::NavigationEvents::EVENT_EST_TIME_ARRIVAL_UPDATED, &updateEta);
     etaLabel.setStyle(&curvedLabelStyle);
 
     // Estimated Distance Arrival section curved label
-    edaLabel = CurvedLabel(lv_scr_act(), 180, 180, 170, -40, 6, true);
+    edaLabel = CurvedLabel(lv_screen_active(), 180, 180, 170, -40, 6, true);
     updateEda();
     Event::instance()->connect(edaLabel.getContainer(), NavigationModel::NavigationEvents::EVENT_EST_DISTANCE_ARRIVAL_UPDATED, &updateEda);
     edaLabel.setStyle(&curvedLabelStyle);
 
     // Direction Icon
     // LV_IMAGE_DECLARE(beelight_logo_inv);
-    // lv_obj_t *directionIcon = lv_img_create(lv_scr_act());
+    // lv_obj_t *directionIcon = lv_img_create(lv_screen_active());
     // lv_img_set_src(directionIcon, &beelight_logo_inv);
     // lv_img_set_size_mode(directionIcon, LV_IMG_SIZE_MODE_REAL);
     // lv_obj_set_size(directionIcon, 160, 160);
@@ -99,7 +99,7 @@ void ui_init()
     // lv_obj_align(directionIcon, LV_ALIGN_CENTER, 0, -40);
 
     // Direction label
-    directionLabel = lv_label_create(lv_scr_act());
+    directionLabel = lv_label_create(lv_screen_active());
     lv_obj_set_width(directionLabel, 300);
     lv_label_set_long_mode(directionLabel, LV_LABEL_LONG_WRAP);
     lv_obj_set_style_text_align(directionLabel, LV_TEXT_ALIGN_CENTER, 0);
@@ -109,7 +109,7 @@ void ui_init()
     lv_obj_align(directionLabel, LV_ALIGN_CENTER, 0, 70);
 
     // Distance next instruction
-    directionDistanceLabel = lv_label_create(lv_scr_act());
+    directionDistanceLabel = lv_label_create(lv_screen_active());
     lv_obj_set_style_text_align(directionDistanceLabel, LV_TEXT_ALIGN_CENTER, 0);
     updateDirectionDistanceLabel();
     Event::instance()->connect(directionDistanceLabel, NavigationModel::NavigationEvents::EVENT_REMAINING_DISTANCE_UPDATED, &updateDirectionDistanceLabel);
@@ -117,7 +117,7 @@ void ui_init()
     lv_obj_align(directionDistanceLabel, LV_ALIGN_CENTER, 0, 150);
 
     // Connection state label
-    connectionStateLabel = lv_label_create(lv_scr_act());
+    connectionStateLabel = lv_label_create(lv_screen_active());
     lv_label_set_text(connectionStateLabel, "Disc.");
     lv_obj_set_style_text_align(connectionStateLabel, LV_TEXT_ALIGN_LEFT, 0);
     lv_obj_set_style_text_font(connectionStateLabel, &lv_font_montserrat_20, 0);

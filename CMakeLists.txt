@@ -51,3 +51,6 @@ target_link_libraries(${PROJECT_NAME} lvgl)
 if(SIMULATOR)
     target_link_libraries(${PROJECT_NAME} X11 lvgl_examples pthread)
 endif()
+
+enable_testing()
+add_subdirectory(test)
