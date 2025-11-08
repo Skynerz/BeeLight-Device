@@ -104,6 +104,7 @@ TEST(Event, connect) {
 
     event->registerEvent(testEventId);
 
+    dummyObj = (void*) 1;
     event->connect((lv_obj_t*) dummyObj, testEventId, &dummyCallback, testData);
     EXPECT_EQ(stub_add, 1);
     EXPECT_EQ(stub_event, event->registeredEvents_m[testEventId].first);

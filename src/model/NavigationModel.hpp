@@ -28,6 +28,7 @@ public:
     }
 
     NavigationModel();
+    void reset();
 
     void setCurrentTime(const std::string &time);
     void setEstTimeBeforeArrival(const std::string &eta);
@@ -70,10 +71,10 @@ private:
     #define UNDEFINED std::string("--")
     std::string currentTime_m{UNDEFINED};
     std::string estTimeBeforeArrival_m{UNDEFINED};
-    std::string estDistanceBeforeArrival_m{UNDEFINED + " m"};
+    std::string estDistanceBeforeArrival_m{UNDEFINED};
     std::string arrivingTime_m{UNDEFINED};
     std::string nextInstruction_m{UNDEFINED};
-    std::string remainingDistanceBeforeNextInstruction_m{UNDEFINED + " m"};
+    std::string remainingDistanceBeforeNextInstruction_m{UNDEFINED};
 };
 
 #endif // NAVIGATION_MODEL_HPP

@@ -10,6 +10,16 @@ NavigationModel::NavigationModel()
     Event::instance()->registerEvent(EVENT_REMAINING_DISTANCE_UPDATED);
 }
 
+void NavigationModel::reset()
+{
+    setCurrentTime(UNDEFINED);
+    setEstTimeBeforeArrival(UNDEFINED);
+    setEstDistanceBeforeArrival(UNDEFINED);
+    setArrivingTime(UNDEFINED);
+    setNextInstruction(UNDEFINED);
+    setRemainingDistanceBeforeNextInstruction(UNDEFINED);
+}
+
 void NavigationModel::setCurrentTime(const std::string &time)
 {
     if (time != currentTime_m)

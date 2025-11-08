@@ -24,12 +24,9 @@ using String = std::string; //todo
 /* Exported function prototypes ----------------------------------------------*/
 void ui_init();
 
-
 // Setters
 void setDirectionIcon(const uint8_t *iconData, size_t iconSize);
 
 void setConnected(const bool connected);
-
-void clearData();
 
 #endif /* UI_H */

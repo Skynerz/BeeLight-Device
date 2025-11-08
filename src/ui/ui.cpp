@@ -1,9 +1,7 @@
 #include "ui.h"
 #include <lvgl.h>
 #include <string.h>
-// #include "extra/libs/png/lv_png.h"
 
-#include "CurvedLabel.h"
 #include "Event.hpp"
 #include "model/NavigationModel.hpp"
 #include "port.hpp"
@@ -13,8 +11,8 @@ static lv_obj_t* screenBg;
 #endif
 static lv_obj_t *timeLabel;
 
-static CurvedLabel etaLabel;
-static CurvedLabel edaLabel;
+static lv_obj_t* etaLabel;
+static lv_obj_t* edaLabel;
 
 static lv_obj_t *directionLabel;
 static lv_obj_t *directionDistanceLabel;
@@ -49,12 +47,12 @@ static void updateCurrentTime(lv_event_t *event = nullptr)
 
 static void updateEta(lv_event_t *event = nullptr)
 {
-    etaLabel.setText(NavigationModel::instance()->getEstTimeBeforeArrival().c_str());
+    lv_arclabel_set_text(etaLabel, NavigationModel::instance()->getEstTimeBeforeArrival().c_str());
 }
 
 static void updateEda(lv_event_t *event = nullptr)
 {
-    edaLabel.setText(NavigationModel::instance()->getEstDistanceBeforeArrival().c_str());
+    lv_arclabel_set_text(edaLabel, NavigationModel::instance()->getEstDistanceBeforeArrival().c_str());
 }
 
 static void updateDirection(lv_event_t *event = nullptr)
@@ -87,18 +85,34 @@ void ui_init()
     lv_obj_add_style(timeLabel, &timeStyle, 0);
 
     // Estimated Time Arrival section curved label
-    int centerX = getScreenWidth() / 2;
-    int centerY = getScreenHeight() / 2;
-    etaLabel = CurvedLabel(lv_screen_active(), centerX, centerY, 160, 220, 6, true);
+    etaLabel = lv_arclabel_create(lv_scr_act());
+    lv_obj_set_size(etaLabel, getScreenWidth(), getScreenHeight());
+    lv_obj_set_style_text_letter_space(etaLabel, 0, LV_PART_MAIN);
+    lv_obj_add_style(etaLabel, &curvedLabelStyle, LV_PART_MAIN);
+    lv_arclabel_set_angle_start(etaLabel, 40); //when center => - 180 ????
+    lv_arclabel_set_radius(etaLabel, LV_PCT(80));
+    lv_arclabel_set_recolor(etaLabel, true);
+    lv_arclabel_set_text_vertical_align(etaLabel, LV_ARCLABEL_TEXT_ALIGN_CENTER);
+    lv_arclabel_set_dir(etaLabel, LV_ARCLABEL_DIR_CLOCKWISE);
+    lv_arclabel_set_text_horizontal_align(etaLabel, LV_ARCLABEL_TEXT_ALIGN_CENTER);
+    lv_obj_center(etaLabel);
     updateEta();
-    Event::instance()->connect(etaLabel.getContainer(), NavigationModel::NavigationEvents::EVENT_EST_TIME_ARRIVAL_UPDATED, &updateEta);
-    etaLabel.setStyle(&curvedLabelStyle);
+    Event::instance()->connect(etaLabel, NavigationModel::NavigationEvents::EVENT_EST_TIME_ARRIVAL_UPDATED, &updateEta);
 
     // Estimated Distance Arrival section curved label
-    edaLabel = CurvedLabel(lv_screen_active(), centerX, centerY, 160, -40, 6, true);
+    edaLabel = lv_arclabel_create(lv_scr_act());
+    lv_obj_set_size(edaLabel, getScreenWidth(), getScreenHeight());
+    lv_obj_set_style_text_letter_space(edaLabel, 0, LV_PART_MAIN);
+    lv_obj_add_style(edaLabel, &curvedLabelStyle, LV_PART_MAIN);
+    lv_arclabel_set_angle_start(edaLabel, 140);
+    lv_arclabel_set_radius(edaLabel, LV_PCT(80));
+    lv_arclabel_set_recolor(edaLabel, true);
+    lv_arclabel_set_text_vertical_align(edaLabel, LV_ARCLABEL_TEXT_ALIGN_CENTER);
+    lv_arclabel_set_dir(edaLabel, LV_ARCLABEL_DIR_CLOCKWISE);
+    lv_arclabel_set_text_horizontal_align(edaLabel, LV_ARCLABEL_TEXT_ALIGN_CENTER);
+    lv_obj_center(edaLabel);
     updateEda();
-    Event::instance()->connect(edaLabel.getContainer(), NavigationModel::NavigationEvents::EVENT_EST_DISTANCE_ARRIVAL_UPDATED, &updateEda);
-    edaLabel.setStyle(&curvedLabelStyle);
+    Event::instance()->connect(edaLabel, NavigationModel::NavigationEvents::EVENT_EST_DISTANCE_ARRIVAL_UPDATED, &updateEda);
 
     // Direction Icon
     // LV_IMAGE_DECLARE(beelight_logo_inv);
@@ -187,13 +201,3 @@ void setConnected(const bool connected)
     lv_label_set_text(connectionStateLabel, connected ? "Conn." : "Disc.");
 }
 
-void clearData()
-{
-    LV_IMAGE_DECLARE(beelight_logo_inv);
-    etaLabel.setText("");
-    edaLabel.setText("");
-    lv_label_set_text(directionLabel, "");
-    lv_label_set_text(directionDistanceLabel, "");
-    lv_label_set_text(connectionStateLabel, "Disc.");
-    lv_img_set_src(directionLabel, &beelight_logo_inv);
-}
