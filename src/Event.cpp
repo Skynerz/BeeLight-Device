@@ -20,7 +20,7 @@ void Event::emit(uint8_t eventId, void *data)
 void Event::connect(lv_obj_t* obj, uint8_t eventId, lv_event_cb_t cb, void *data)
 {
     auto event = instance()->getLvEvent(eventId);
-    if (event)
+    if (event && obj)
     {
         event->second = obj;
         lv_obj_add_event_cb(obj, cb, (lv_event_code_t) event->first, data);

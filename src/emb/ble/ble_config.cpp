@@ -31,7 +31,7 @@ class BeelightServerConnectionCallbacks : public BLEServerCallbacks {
         deviceConnected = false;
         Serial.println("❌ Disconnected");
         setConnected(false);
-        clearData();
+        NavigationModel::instance()->reset();
         pServer->startAdvertising();
     }
 };
