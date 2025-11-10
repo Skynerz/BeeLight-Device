@@ -4,8 +4,12 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#if __WIN32__
+#include <ws2tcpip.h>
+#else
 #include <arpa/inet.h>
 #include <poll.h>
+#endif
 
 void BeelightCom_sim::init()
 {
@@ -32,6 +36,63 @@ void BeelightCom_sim::uninit()
 
 void BeelightCom_sim::serverInit()
 {
+#if __WIN32__
+    WSADATA wsaData;
+    int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (iResult != 0)
+    {
+        logger_m.error("WSAStartup failed with error: " + iResult);
+        return;
+    }
+
+    struct addrinfo hints;
+    struct addrinfo *serverAddress_m = nullptr;
+    ZeroMemory(&hints, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    // Resolve the server address and port
+    iResult = getaddrinfo(INET_ADDR, "7979", &hints, &serverAddress_m);
+    if (iResult != 0)
+    {
+        logger_m.error("getaddrinfo failed with error: " + iResult);
+        WSACleanup();
+        return;
+    }
+
+    // Create a SOCKET for connecting to server
+    socket_m = socket(serverAddress_m->ai_family, serverAddress_m->ai_socktype,
+                      serverAddress_m->ai_protocol);
+    if (socket_m == INVALID_SOCKET)
+    {
+        logger_m.error("socket failed with error: " + WSAGetLastError());
+        WSACleanup();
+        return;
+    }
+
+    // Setup the TCP listening socket
+    iResult = bind(socket_m, serverAddress_m->ai_addr, (int)serverAddress_m->ai_addrlen);
+    if (iResult == SOCKET_ERROR)
+    {
+        logger_m.error("bind failed with error: " + WSAGetLastError());
+        freeaddrinfo(serverAddress_m);
+        closesocket(socket_m);
+        WSACleanup();
+        return;
+    }
+
+    freeaddrinfo(serverAddress_m);
+
+    iResult = listen(socket_m, SOMAXCONN);
+    if (iResult == SOCKET_ERROR)
+    {
+        logger_m.error("listen failed with error: %d" + WSAGetLastError());
+        closesocket(socket_m);
+        WSACleanup();
+        return;
+    }
+#else
     socket_m = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     serverAddress_m.sin_family = AF_INET;
@@ -60,10 +121,12 @@ void BeelightCom_sim::serverInit()
         logger_m.error("listen error: " + std::string(strerror(errno)));
         close(socket_m);
     }
+#endif
 }
 
 void BeelightCom_sim::serverStep()
 {
+#if !__WIN32__
     CmdFrame pkt;
     struct timeval tv;
     fd_set rfds;
@@ -140,6 +203,7 @@ void BeelightCom_sim::serverStep()
         break;
         }
     }
+#endif
 }
 
 void BeelightCom_sim::processPacket(const CmdFrame &pkt, int peerFd)

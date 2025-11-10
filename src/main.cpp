@@ -20,7 +20,11 @@ void loop()
     }
 }
 
+#if __WIN32__
+int WinMain(void)
+#else
 int main(void)
+#endif
 {
     setup();
 #ifdef SIMULATOR
