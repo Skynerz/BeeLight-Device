@@ -1,3 +1,5 @@
+#if CONFIG_LV_USE_X11
+
 #include "BeelightApp.hpp"
 #include "port.hpp" 
 #include "BeeLog.hpp"
@@ -56,3 +58,5 @@ uint16_t getScreenWidth() {
 uint16_t getScreenHeight() {
     return MY_DISP_VER_RES;
 }
+
+#endif

@@ -4,9 +4,14 @@
 #include <lvgl.h>
 #include <functional>
 #include <map>
-//TODO windows
+#if __WIN32__
+#define WIN32_LEAN_AND_MEAN
+#include <winsock2.h>
+#include <windows.h>
+#else
 #include <sys/socket.h>
 #include <netinet/in.h>
+#endif
 #include "com/BeelightCom.hpp"
 #include "Frame.hpp"
 
@@ -44,9 +49,13 @@ private:
     void processReadCommand(const CmdFrame &inPkt, CmdFrame &outPkt);
     void initWriteCommand();
     void processWriteCommand(const CmdFrame &inPkt, CmdFrame &outPkt);
-    int socket_m;
     int peer_m;
+#if __WIN32__
+    SOCKET socket_m;
+#else
+    int socket_m;
     sockaddr_in serverAddress_m;
+#endif
     bool clientConnected{false};
     lv_timer_t *timer_m;
     bool simulationEnabled_m{false};
