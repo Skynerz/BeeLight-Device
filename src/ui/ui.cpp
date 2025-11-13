@@ -4,22 +4,22 @@
 
 #include "Event.hpp"
 #include "model/NavigationModel.hpp"
+#include "DirectionIconWidget.hpp"
 #include "port.hpp"
 
 #ifdef SIMULATOR
-static lv_obj_t* screenBg;
+static lv_obj_t *screenBg;
 #endif
 static lv_obj_t *timeLabel;
 
-static lv_obj_t* etaLabel;
-static lv_obj_t* edaLabel;
+static lv_obj_t *etaLabel;
+static lv_obj_t *edaLabel;
 
 static lv_obj_t *directionLabel;
 static lv_obj_t *directionDistanceLabel;
 
 static lv_obj_t *connectionStateLabel;
-static lv_obj_t *directionIcon;
-static lv_img_dsc_t directionIconPng;
+static DirectionIconWidget directionIcon;
 static uint8_t *iconCopy = nullptr;
 
 static lv_style_t curvedLabelStyle;
@@ -65,6 +65,11 @@ static void updateDirectionDistanceLabel(lv_event_t *event = nullptr)
     lv_label_set_text(directionDistanceLabel, NavigationModel::instance()->getRemainingDistanceBeforeNextInstruction().c_str());
 }
 
+static void updateNextInstructionIcon(lv_event_t *event = nullptr)
+{
+    directionIcon.setIcon(NavigationModel::instance()->getNextInstructionIcon());
+}
+
 void ui_init()
 {
     auto navModel = NavigationModel::instance();
@@ -89,7 +94,7 @@ void ui_init()
     lv_obj_set_size(etaLabel, getScreenWidth(), getScreenHeight());
     lv_obj_set_style_text_letter_space(etaLabel, 0, LV_PART_MAIN);
     lv_obj_add_style(etaLabel, &curvedLabelStyle, LV_PART_MAIN);
-    lv_arclabel_set_angle_start(etaLabel, 40); //when center => - 180 ????
+    lv_arclabel_set_angle_start(etaLabel, 40); // when center => - 180 ????
     lv_arclabel_set_radius(etaLabel, LV_PCT(80));
     lv_arclabel_set_recolor(etaLabel, true);
     lv_arclabel_set_text_vertical_align(etaLabel, LV_ARCLABEL_TEXT_ALIGN_CENTER);
@@ -115,13 +120,11 @@ void ui_init()
     Event::instance()->connect(edaLabel, NavigationModel::NavigationEvents::EVENT_EST_DISTANCE_ARRIVAL_UPDATED, &updateEda);
 
     // Direction Icon
-    // LV_IMAGE_DECLARE(beelight_logo_inv);
-    // lv_obj_t *directionIcon = lv_img_create(lv_screen_active());
-    // lv_img_set_src(directionIcon, &beelight_logo_inv);
-    // lv_img_set_size_mode(directionIcon, LV_IMG_SIZE_MODE_REAL);
-    // lv_obj_set_size(directionIcon, 160, 160);
-    // lv_img_set_zoom(directionIcon, 330);
-    // lv_obj_align(directionIcon, LV_ALIGN_CENTER, 0, -40);
+    directionIcon.init();
+    directionIcon.setPosition(LV_ALIGN_CENTER, 0, -40);
+    directionIcon.setSize(160, 160);
+    updateNextInstructionIcon();
+    Event::instance()->connect(directionIcon.getObj(), NavigationModel::NavigationEvents::EVENT_NEXT_INSTRUCTION_ICON_UPDATED, &updateNextInstructionIcon);
 
     // Direction label
     directionLabel = lv_label_create(lv_screen_active());
@@ -147,13 +150,6 @@ void ui_init()
     lv_obj_set_style_text_align(connectionStateLabel, LV_TEXT_ALIGN_LEFT, 0);
     lv_obj_set_style_text_font(connectionStateLabel, &lv_font_montserrat_20, 0);
     lv_obj_align(connectionStateLabel, LV_ALIGN_LEFT_MID, 10, 0);
-
-    LV_IMAGE_DECLARE(img_jrbobdobbs);
-    lv_obj_t *img;
-
-    img = lv_image_create(lv_screen_active());
-    lv_image_set_src(img, &img_jrbobdobbs);
-    lv_obj_align(img, LV_ALIGN_CENTER, 0, 0);
 }
 
 // void copy_and_invert_colors_rgba(uint8_t* bufIn, uint8_t* bufOut, uint32_t px_cnt) {
@@ -178,11 +174,11 @@ void setDirectionIcon(const uint8_t *iconData, size_t iconSize)
     // Remplir le descripteur
     // directionIconPng.header.always_zero = 0;
 
-    directionIconPng.header.w = 0;
-    directionIconPng.header.h = 0;
-    directionIconPng.header.cf = LV_COLOR_FORMAT_RAW_ALPHA;
-    directionIconPng.data_size = iconSize;
-    directionIconPng.data = iconCopy;
+    // directionIconPng.header.w = 0;
+    // directionIconPng.header.h = 0;
+    // directionIconPng.header.cf = LV_COLOR_FORMAT_RAW_ALPHA;
+    // directionIconPng.data_size = iconSize;
+    // directionIconPng.data = iconCopy;
 
     // DEBUG ----------------------------------------------------------------------
     // Serial.printf("Icon updated, size: %u bytes\n", directionIconPng.data_size);
@@ -192,12 +188,11 @@ void setDirectionIcon(const uint8_t *iconData, size_t iconSize)
     // DEBUG ----------------------------------------------------------------------
 
     // Mise à jour dans le contexte LVGL
-    lv_async_call([](void *)
-                  { lv_img_set_src(directionIcon, &directionIconPng); }, nullptr);
+    // lv_async_call([](void *)
+    //               { lv_img_set_src(directionIcon, &directionIconPng); }, nullptr);
 }
 
 void setConnected(const bool connected)
 {
     lv_label_set_text(connectionStateLabel, connected ? "Conn." : "Disc.");
 }
-
