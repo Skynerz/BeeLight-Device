@@ -8,6 +8,7 @@ NavigationModel::NavigationModel()
     Event::instance()->registerEvent(EVENT_ARRIVING_TIME_UPDATED);
     Event::instance()->registerEvent(EVENT_NEXT_INSTRUCTION_UPDATED);
     Event::instance()->registerEvent(EVENT_REMAINING_DISTANCE_UPDATED);
+    Event::instance()->registerEvent(EVENT_NEXT_INSTRUCTION_ICON_UPDATED);
 }
 
 void NavigationModel::reset()
@@ -18,6 +19,7 @@ void NavigationModel::reset()
     setArrivingTime(UNDEFINED);
     setNextInstruction(UNDEFINED);
     setRemainingDistanceBeforeNextInstruction(UNDEFINED);
+    setNextInstructionIcon(InstructionIcon::UNKNOWN);
 }
 
 void NavigationModel::setCurrentTime(const std::string &time)
@@ -71,5 +73,14 @@ void NavigationModel::setRemainingDistanceBeforeNextInstruction(const std::strin
     {
         remainingDistanceBeforeNextInstruction_m = distance;
         Event::instance()->emit(EVENT_REMAINING_DISTANCE_UPDATED, &remainingDistanceBeforeNextInstruction_m);
+    }
+}
+
+void NavigationModel::setNextInstructionIcon(const InstructionIcon icon)
+{
+    if (nextInstructionIcon_m != icon)
+    {
+        nextInstructionIcon_m = icon;
+        Event::instance()->emit(EVENT_NEXT_INSTRUCTION_ICON_UPDATED, &nextInstructionIcon_m);
     }
 }
