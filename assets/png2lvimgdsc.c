@@ -29,8 +29,8 @@
 static const LV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_LARGE_CONST LV_ATTRIBUTE_%s\n"
 
 #define VAR_NAME (const char *) "const uint8_t %s_map[] = {\n"
-
-#define MAP_STRUCT (const char*) "const lv_image_dsc_t %s __attribute__ ((section (\"ICONS\"))) = {\n\
+//__attribute__ ((section (\"ICONS\"))) TODO linker file ?
+#define MAP_STRUCT (const char*) "const lv_image_dsc_t %s = {\n\
     .header = {\n\
         .cf = LV_COLOR_FORMAT_RAW_ALPHA,\n\
         .w = %d,\n\

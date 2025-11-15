@@ -86,6 +86,7 @@ public:
         FERRY_BOAT,
         FERRY_TRAIN,
         NAME_CHANGE,
+        LAST_ICON, //no more after
     };
 
     static NavigationModel *instance()

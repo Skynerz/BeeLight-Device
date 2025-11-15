@@ -93,7 +93,7 @@ const uint8_t ic_turn_left_map[] = {
     0x40, 0x4d, 0xd3, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82, 
     };
 
-const lv_image_dsc_t ic_turn_left __attribute__ ((section ("ICONS"))) = {
+const lv_image_dsc_t ic_turn_left = {
     .header = {
         .cf = LV_COLOR_FORMAT_RAW_ALPHA,
         .w = 192,

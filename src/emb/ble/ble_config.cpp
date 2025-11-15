@@ -5,6 +5,7 @@
 #include <BLEServer.h>
 
 #include "model/NavigationModel.hpp"
+#include "BeeLog.hpp"
 #include "ui/ui.h"
 #define MAX_IMG_SIZE 16384  // prévoir assez large pour ton PNG 126x126
 
@@ -16,20 +17,21 @@ static uint8_t img_buf[MAX_IMG_SIZE];
 static size_t img_len = 0;
 static size_t expected_size = 0;
 static bool receiving_img = false;
+static BeeLog logger_m("BleConfig");
 // END TODO
 
 // Connection events callbacks
 class BeelightServerConnectionCallbacks : public BLEServerCallbacks {
     void onConnect(BLEServer *pServer) override {
         deviceConnected = true;
-        Serial.println("📱 Connected");
+        logger_m.debug("📱 Connected");
         setConnected(true);
         BLEDevice::stopAdvertising(); // Stop advertising once connected
     }
 
     void onDisconnect(BLEServer *pServer) override {
         deviceConnected = false;
-        Serial.println("❌ Disconnected");
+        logger_m.debug("❌ Disconnected");
         setConnected(false);
         NavigationModel::instance()->reset();
         pServer->startAdvertising();
@@ -58,7 +60,7 @@ class BeelightSecurityCallbacks : public BLESecurityCallbacks {
 #if defined(CONFIG_BLUEDROID_ENABLED)
     void onAuthenticationComplete(esp_ble_auth_cmpl_t cmpl) override {
         if (cmpl.success)
-            Serial.println("✅ Authentication success");
+            logger_m.debug("✅ Authentication success");
         else
             Serial.printf("❌ Authentication failed, stat=%d\n", cmpl.fail_reason);
     }
@@ -97,7 +99,7 @@ void ble_start_advertising() {
     advertising->setScanResponseData(*advData);
 
     advertising->start();
-    Serial.println("BLE Advertising started");
+    logger_m.info("BLE Advertising started");
 }
 
 // Init BLE service
@@ -122,7 +124,7 @@ void ble_init() {
                 Serial.printf("Current Time Set: %s\n", value.c_str());
                 NavigationModel::instance()->setCurrentTime(std::string(value.c_str()));
             } else {
-                Serial.println("Rxed empty current time");
+                logger_m.warn("Rxed empty current time");
             }
         }
     };
@@ -143,7 +145,7 @@ void ble_init() {
                 Serial.printf("ETA set: %s\n", value.c_str());
                 NavigationModel::instance()->setEstTimeBeforeArrival(std::string(value.c_str()));
             } else {
-                Serial.println("Rxed empty ETA");
+                logger_m.debug("Rxed empty ETA");
             }
         }
     };
@@ -159,7 +161,7 @@ void ble_init() {
                 Serial.printf("EDA Set: %s\n", value.c_str()); 
                 NavigationModel::instance()->setEstDistanceBeforeArrival(std::string(value.c_str()));
             } else {
-                Serial.println("Rxed empty EDA value");
+                logger_m.warn("Rxed empty EDA value");
             }
         }
     };
@@ -178,7 +180,7 @@ void ble_init() {
                 Serial.printf("Arriving Time Set: %s\n", value.c_str());
                 NavigationModel::instance()->setArrivingTime(std::string(value.c_str()));
             } else {
-                Serial.println("Rxed empty  value");
+                logger_m.warn("Rxed empty  value");
             }
         }
     };
@@ -194,7 +196,7 @@ void ble_init() {
                 Serial.printf("Instruction Set: %s\n", value.c_str());
                 NavigationModel::instance()->setNextInstruction(std::string(value.c_str()));
             } else {
-                Serial.println("Rxed empty instruction value");
+                logger_m.warn("Rxed empty instruction value");
             }
         }
     };
@@ -210,54 +212,24 @@ void ble_init() {
                 Serial.printf("Instruction dist Set: %s\n", value.c_str());
                 NavigationModel::instance()->setRemainingDistanceBeforeNextInstruction(std::string(value.c_str()));
             } else {
-                Serial.println("Rxed empty instruction dist value");
+                logger_m.warn("Rxed empty instruction dist value");
             }
         }
     };
     charInstructionDistance->setCallbacks(new NextInstructionDistanceCallback());
 
     /// NEXT INSTRUCTION ICON -------------------------------------------------------------
-    BLECharacteristic *charIcon = navService->createCharacteristic(CHARAC_UUID_INSTRUCTION_ICON, BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_READ);
-    charIcon->setValue("Icon data");
-
+    BLECharacteristic *charIcon = navService->createCharacteristic(CHARAC_UUID_INSTRUCTION_ICON, BLECharacteristic::PROPERTY_WRITE);
     // Callback definition 
     class NextInstructionIconCallback : public BLECharacteristicCallbacks {
-        void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
-            uint8_t* value = param->write.value;
-            uint16_t dataLength = param->write.len;
-            
-            // On first packet on this characteristic, the content corresponds to the size (4 bytes little endian)
-            if(!receiving_img) {
-                receiving_img = true;
-                expected_size = pCharacteristic->getValue().toInt();
-                img_len = 0;
-
-            // On next packets, we receive the actual data
-            } else {
-                // Add data to buffer
-                memcpy(&img_buf[img_len], value, dataLength);
-                img_len += dataLength;
-
-                // DEBUG -----------------------------------------------------------------------------
-                // Debug: print received data as hex
-                // for (uint8_t i = 0; i < dataLength; i++)
-                // {
-                //     Serial.printf("%02X", &img_buf[img_len-dataLength+i]);
-                // }
-                // Serial.println();
-                // Serial.printf("Received %d bytes, total %d/%d\n", dataLength, img_len, expected_size);
-                // DEBUG -----------------------------------------------------------------------------
-
-                // If we have received the full image, display it
-                if(img_len >= expected_size) {
-                    // Serial.println("PNG complete, displaying...");
-                    setDirectionIcon(img_buf, img_len);
-
-                    receiving_img = false;
-                    img_buf[0] = 0; // Clear buffer
-                    img_len = 0;
-                    expected_size = 0;
-                }
+        void onWrite(BLECharacteristic *pCharacteristic) {
+            Serial.printf("Rxed instruction sz %d\n", pCharacteristic->getLength());
+            if(pCharacteristic->getLength() == 1) {
+                Serial.printf("Instruction icon Set: %d\n", pCharacteristic->getData()[0]);
+                NavigationModel::instance()->setNextInstructionIcon(static_cast<NavigationModel::InstructionIcon>(pCharacteristic->getData()[0]));  
+            }
+            else {
+                logger_m.warn("Rxed empty instruction icon");
             }
         }
     };

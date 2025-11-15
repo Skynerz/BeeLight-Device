@@ -198,7 +198,7 @@ const uint8_t ic_roundabout_slight_left_clockwise_map[] = {
     0xb7, 0x4f, 0x37, 0x51, 0xa5, 0xaf, 0xb1, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 
     0x42, 0x60, 0x82, };
 
-const lv_image_dsc_t ic_roundabout_slight_left_clockwise __attribute__ ((section ("ICONS"))) = {
+const lv_image_dsc_t ic_roundabout_slight_left_clockwise = {
     .header = {
         .cf = LV_COLOR_FORMAT_RAW_ALPHA,
         .w = 192,
