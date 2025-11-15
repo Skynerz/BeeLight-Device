@@ -29,7 +29,7 @@ if(SIMULATOR)
     message("Simulator BUILD")
     set(CUSTOM_DEFS 
         SIMULATOR=1 
-        MEMSIZE_KB=64 
+        MEMSIZE_KB=384
         CONFIG_LV_USE_SYSMON=1 
         CONFIG_LV_USE_MEM_MONITOR=1
         CONFIG_LV_USE_PERF_MONITOR=1
@@ -51,12 +51,14 @@ if(SIMULATOR)
             LV_USE_SDL=1
             LV_USE_OS=LV_OS_SDL2
             DRAW_STACK_SIZE=32768
+            LVGL_CUSTOM_LOG=1
         )
     else()
         message("X11 BUILD")
         set(CUSTOM_DEFS ${CUSTOM_DEFS}      
             CONFIG_LV_USE_X11=1
             LV_USE_OS=LV_OS_NONE
+            LVGL_CUSTOM_LOG=0
         )
     endif()
     # set_property(GLOBAL PROPERTY HAS_PARENT_SCOPE true)
@@ -107,6 +109,7 @@ if(SIMULATOR)
     else()
         target_link_libraries(${PROJECT_NAME} X11 lvgl_examples pthread)
     endif()
+    target_link_options(${PROJECT_NAME} PUBLIC LINKER:-Map=${PROJECT_NAME}.map)
 endif()
 
 enable_testing()

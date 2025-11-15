@@ -3,14 +3,14 @@
 
 #include <string>
 
-class BeeLog {
+class BeeLog
+{
 public:
     explicit BeeLog(std::string tag) : tag_m(tag)
     {
         init();
     }
 
-    void init();
     static void debug(std::string tag, std::string message);
     static void info(std::string tag, std::string message);
     static void error(std::string tag, std::string message);
@@ -32,6 +32,7 @@ public:
 
 private:
     std::string tag_m;
+    void init();
 };
 
 #endif

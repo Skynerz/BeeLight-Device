@@ -398,6 +398,10 @@ void step(lv_timer_t *timer)
                     model->setNextInstruction(directions[dirIndex]);
                     dni = 500;
                 }
+
+                static uint8_t instructionIcon = 0;
+                model->setNextInstructionIcon(static_cast<NavigationModel::InstructionIcon>(instructionIcon));
+                instructionIcon = (instructionIcon + 1) % NavigationModel::InstructionIcon::NAME_CHANGE;
             }
         }
     }
