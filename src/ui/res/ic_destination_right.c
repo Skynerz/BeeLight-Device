@@ -179,7 +179,7 @@ const uint8_t ic_destination_right_map[] = {
     0xa7, 0x20, 0x3b, 0x73, 0x4a, 0x7e, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 
     0x60, 0x82, };
 
-const lv_image_dsc_t ic_destination_right __attribute__ ((section ("ICONS"))) = {
+const lv_image_dsc_t ic_destination_right = {
     .header = {
         .cf = LV_COLOR_FORMAT_RAW_ALPHA,
         .w = 192,

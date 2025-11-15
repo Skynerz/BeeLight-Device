@@ -78,7 +78,7 @@ void NavigationModel::setRemainingDistanceBeforeNextInstruction(const std::strin
 
 void NavigationModel::setNextInstructionIcon(const InstructionIcon icon)
 {
-    if (nextInstructionIcon_m != icon)
+    if (nextInstructionIcon_m != icon && icon < LAST_ICON)
     {
         nextInstructionIcon_m = icon;
         Event::instance()->emit(EVENT_NEXT_INSTRUCTION_ICON_UPDATED, &nextInstructionIcon_m);

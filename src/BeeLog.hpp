@@ -13,6 +13,7 @@ public:
 
     static void debug(std::string tag, std::string message);
     static void info(std::string tag, std::string message);
+    static void warn(std::string tag, std::string message);
     static void error(std::string tag, std::string message);
 
     void debug(std::string message)
@@ -24,6 +25,12 @@ public:
     {
         BeeLog::info(tag_m, message);
     }
+
+    void warn(std::string message)
+    {
+        BeeLog::warn(tag_m, message);
+    }
+
 
     void error(std::string message)
     {
