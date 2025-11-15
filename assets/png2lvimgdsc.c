@@ -30,7 +30,7 @@ static const LV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_LARGE_CONST LV_ATTRIBUTE_%s\n"
 
 #define VAR_NAME (const char *) "const uint8_t %s_map[] = {\n"
 
-#define MAP_STRUCT (const char*) "const lv_image_dsc_t %s = {\n\
+#define MAP_STRUCT (const char*) "const lv_image_dsc_t %s __attribute__ ((section (\"ICONS\"))) = {\n\
     .header = {\n\
         .cf = LV_COLOR_FORMAT_RAW_ALPHA,\n\
         .w = %d,\n\
@@ -41,7 +41,7 @@ static const LV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_LARGE_CONST LV_ATTRIBUTE_%s\n"
 };\n"
 
 #define FILENAMELEN 64
-#define BUFFERSIZE  512
+#define BUFFERSIZE  1024
 
 int main(int argc, char **argv)
 {
