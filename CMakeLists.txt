@@ -84,6 +84,7 @@ FetchContent_MakeAvailable(lvgl)
 message("Make LVGL available done")
 
 add_subdirectory(src)
+add_subdirectory(assets)
 
 add_executable(${PROJECT_NAME} ${source_files})
 target_include_directories(${PROJECT_NAME} PRIVATE ${include_files} ${SRC_DIR} ${ADDITIONAL_INCLUDES} ${CMAKE_SOURCE_DIR})
