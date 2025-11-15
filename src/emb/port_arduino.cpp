@@ -12,7 +12,6 @@ static Board* board;
 void setup()
 {
     BeeLog logger("Port Arduino");
-    logger.init();
     logger.info("Initializing board");
 
     board = new Board();

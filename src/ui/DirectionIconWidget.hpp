@@ -2,7 +2,7 @@
 #define DIRECTION_ICON_WIDGET_HPP
 
 #include "res/icons.h"
-#include "NavigationModel.hpp"
+#include "model/NavigationModel.hpp"
 #include <map>
 
 class DirectionIconWidget
