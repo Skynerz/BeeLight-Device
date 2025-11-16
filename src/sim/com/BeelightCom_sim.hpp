@@ -42,7 +42,8 @@ public:
     bool isSimulationEnabled() const {
         return simulationEnabled_m;
     }
-
+    void simulationStep();
+    
 private:
     void processPacket(const CmdFrame &pkt, int peerFd);
     void initReadCommand();
@@ -66,5 +67,6 @@ private:
 };
 
 void step(lv_timer_t *timer);
+
 
 #endif
