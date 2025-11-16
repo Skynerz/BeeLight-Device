@@ -351,58 +351,65 @@ void BeelightCom_sim::processWriteCommand(const CmdFrame &inPkt, CmdFrame &outPk
 
 void step(lv_timer_t *timer)
 {
-    static bool init = true;
-    const std::string directions[] = {"droite", "gauche", "tout droit", "arrive"};
     static int dirIndex = 0;
     /*Use the user_data*/
     BeelightCom_sim *user_data = (BeelightCom_sim *)lv_timer_get_user_data(timer);
     if (user_data)
     {
         auto logger = user_data->getLogger();
-        auto model = NavigationModel::instance();
 
         user_data->serverStep();
 
         if (user_data->isSimulationEnabled())
         {
-            if (init)
-            {
-                model->setNextInstruction(directions[dirIndex]);
-                init = false;
-            }
-            else
-            {
-                // current time update
-                std::time_t t = std::time(0); // Get the time now
-                std::tm *now = std::localtime(&t);
-                static uint8_t i = 0;
-                std::string currentTime = std::to_string(now->tm_hour) + ":" + std::to_string(i++); // std::to_string(now->tm_min);
-                model->setCurrentTime(currentTime);
-
-                // ETA update
-                static int eta = 20;
-                model->setEstTimeBeforeArrival(std::to_string(eta) + " sec");
-                eta = (eta > 0 ? eta - 1 : 20);
-
-                // EDA update
-                static int eda = 2000;
-                model->setEstDistanceBeforeArrival(std::to_string(eda) + " m");
-                eda = (eda > 0 ? eda - 100 : 2000);
-
-                static int dni = 500;
-                model->setRemainingDistanceBeforeNextInstruction(std::to_string(dni) + " m");
-                dni -= 100;
-                if (dni <= 0)
-                {
-                    dirIndex = (dirIndex + 1) % 4;
-                    model->setNextInstruction(directions[dirIndex]);
-                    dni = 500;
-                }
-
-                static uint8_t instructionIcon = 0;
-                model->setNextInstructionIcon(static_cast<NavigationModel::InstructionIcon>(instructionIcon));
-                instructionIcon = (instructionIcon + 1) % NavigationModel::InstructionIcon::NAME_CHANGE;
-            }
+            user_data->simulationStep();
         }
+    }
+}
+
+void BeelightCom_sim::simulationStep()
+{
+    static uint8_t dirIndex;
+    static bool init = true;
+    const std::string directions[] = {"droite", "gauche", "tout droit", "arrive"};
+    auto model = NavigationModel::instance();
+
+    if (init)
+    {
+        model->setNextInstruction(directions[dirIndex]);
+        init = false;
+    }
+    else
+    {
+        // current time update
+        std::time_t t = std::time(0); // Get the time now
+        std::tm *now = std::localtime(&t);
+        static uint8_t i = 0;
+        std::string currentTime = std::to_string(now->tm_hour) + ":" + std::to_string(now->tm_min);
+        model->setCurrentTime(currentTime);
+
+        // ETA update
+        static int eta = 20;
+        model->setEstTimeBeforeArrival(std::to_string(eta) + " sec");
+        eta = (eta > 0 ? eta - 1 : 20);
+
+        // EDA update
+        static int eda = 2000;
+        model->setEstDistanceBeforeArrival(std::to_string(eda) + " m");
+        eda = (eda > 0 ? eda - 100 : 2000);
+
+        static int dni = 500;
+        model->setRemainingDistanceBeforeNextInstruction(std::to_string(dni) + " m");
+        dni -= 100;
+        if (dni <= 0)
+        {
+            dirIndex = (dirIndex + 1) % 4;
+            model->setNextInstruction(directions[dirIndex]);
+            dni = 500;
+        }
+
+        static uint8_t instructionIcon = 0;
+        model->setNextInstructionIcon(static_cast<NavigationModel::InstructionIcon>(instructionIcon));
+        instructionIcon = (instructionIcon + 1) % NavigationModel::InstructionIcon::NAME_CHANGE;
     }
 }
