@@ -99,7 +99,6 @@ public:
         return instance;
     }
 
-    NavigationModel();
     void reset();
 
     void setCurrentTime(const std::string &time);
@@ -146,6 +145,7 @@ public:
 
 private:
     #define UNDEFINED std::string("--")
+    NavigationModel();
     std::string currentTime_m{UNDEFINED};
     std::string estTimeBeforeArrival_m{UNDEFINED};
     std::string estDistanceBeforeArrival_m{UNDEFINED};
