@@ -55,12 +55,19 @@ class BeelightSecurityCallbacks : public BLESecurityCallbacks {
         return 123456; // ou return 0 pour "Just Works"
     }
 
+#if defined(CONFIG_BLUEDROID_ENABLED)
     void onAuthenticationComplete(esp_ble_auth_cmpl_t cmpl) override {
         if (cmpl.success)
             Serial.println("✅ Authentication success");
         else
             Serial.printf("❌ Authentication failed, stat=%d\n", cmpl.fail_reason);
     }
+#elif defined(CONFIG_NIMBLE_ENABLED)
+    void onAuthenticationComplete(ble_gap_conn_desc* cmpl) override {
+        if (cmpl->sec_state.authenticated)
+            logger_m.debug("✅ Authentication success");
+    }
+#endif
 };
 
 // Init security with callbacks
@@ -108,7 +115,7 @@ void ble_init() {
     /// CURRENT TIME -----------------------------------------------------------------------
     BLECharacteristic *currentTime = genericService->createCharacteristic(CHARAC_UUID_TIME, BLECharacteristic::PROPERTY_WRITE);
     class CurrentTimeCallback : public BLECharacteristicCallbacks {
-        void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
+        void onWrite(BLECharacteristic *pCharacteristic) {
             Serial.printf("Rxed Current Time: %s\n", pCharacteristic->getValue().c_str());
             String value = pCharacteristic->getValue();
             if (value.length() > 0) {
@@ -129,7 +136,7 @@ void ble_init() {
     /// ESTIMATED TIME REMAINING BEFORE ARRIVAL -------------------------------------------
     BLECharacteristic *charEta = navService->createCharacteristic(CHARAC_UUID_ETA, BLECharacteristic::PROPERTY_WRITE);
     class RemainingTimeBeforeArrivalCallback : public BLECharacteristicCallbacks {
-        void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
+        void onWrite(BLECharacteristic *pCharacteristic) {
             Serial.printf("Rxed ETA: %s\n", pCharacteristic->getValue().c_str());
             String value = pCharacteristic->getValue();
             if (value.length() > 0) {
@@ -145,11 +152,11 @@ void ble_init() {
     /// ESTIMATED DISTANCE BEFORE ARRIVAL -------------------------------------------------
     BLECharacteristic *charEda = navService->createCharacteristic(CHARAC_UUID_EDA, BLECharacteristic::PROPERTY_WRITE);
     class RemainingDistanceBeforeArrivalCallback : public BLECharacteristicCallbacks {
-        void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
+        void onWrite(BLECharacteristic *pCharacteristic) {
             Serial.printf("Rxed EDA: %s\n", pCharacteristic->getValue().c_str());
             String value = pCharacteristic->getValue();
             if (value.length() > 0) {
-                Serial.printf("EDA Set: %s\n", value.c_str());
+                Serial.printf("EDA Set: %s\n", value.c_str()); 
                 NavigationModel::instance()->setEstDistanceBeforeArrival(std::string(value.c_str()));
             } else {
                 Serial.println("Rxed empty EDA value");
@@ -164,7 +171,7 @@ void ble_init() {
         BLECharacteristic::PROPERTY_WRITE
     );
     class EstimatedArrivingTimeCallback : public BLECharacteristicCallbacks {
-        void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
+        void onWrite(BLECharacteristic *pCharacteristic) {
             Serial.printf("Rxed arriving time: %s\n", pCharacteristic->getValue().c_str());
             String value = pCharacteristic->getValue();
             if (value.length() > 0) {
@@ -180,7 +187,7 @@ void ble_init() {
     /// NEXT INSTRUCTION ------------------------------------------------------------------
     BLECharacteristic *charInstruction = navService->createCharacteristic(CHARAC_UUID_INSTRUCTION, BLECharacteristic::PROPERTY_WRITE);
     class NextInstructionCallback : public BLECharacteristicCallbacks {
-        void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
+        void onWrite(BLECharacteristic *pCharacteristic) {
             Serial.printf("Rxed instruction: %s\n", pCharacteristic->getValue().c_str());
             String value = pCharacteristic->getValue();
             if (value.length() > 0) {
@@ -196,7 +203,7 @@ void ble_init() {
     /// NEXT INSTRUCTION DISTANCE ------------------------------------------------------------------
     BLECharacteristic *charInstructionDistance = navService->createCharacteristic(CHARAC_UUID_INSTRUCTION_DISTANCE, BLECharacteristic::PROPERTY_WRITE);
     class NextInstructionDistanceCallback : public BLECharacteristicCallbacks {
-        void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
+        void onWrite(BLECharacteristic *pCharacteristic) {
             Serial.printf("Rxed instruction dist: %s\n", pCharacteristic->getValue().c_str());
             String value = pCharacteristic->getValue();
             if (value.length() > 0) {

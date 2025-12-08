@@ -27,8 +27,11 @@
 #define CHARAC_UUID_INSTRUCTION_ICON       "0000BBB6-0000-1000-8000-00805F9B34FB"
 
 static String DEVICE_NAME = "BeeLight";
+#if defined(CONFIG_BLUEDROID_ENABLED)
 static uint16_t DEVICE_APPEARANCE = ESP_BLE_APPEARANCE_OUTDOOR_SPORTS_LOCATION_AND_NAV;
-
+#elif defined(CONFIG_NIMBLE_ENABLED)
+static uint16_t DEVICE_APPEARANCE = 0x1442;
+#endif
 
 /* Exported typedef ----------------------------------------------------------*/
 
