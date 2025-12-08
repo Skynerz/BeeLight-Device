@@ -31,8 +31,8 @@ if(SIMULATOR)
         SIMULATOR=1 
         MEMSIZE_KB=64 
         CONFIG_LV_USE_SYSMON=1 
-        LV_USE_MEM_MONITOR=1
-        LV_USE_PERF_MONITOR=1
+        CONFIG_LV_USE_MEM_MONITOR=1
+        CONFIG_LV_USE_PERF_MONITOR=1
     )
     if (WIN32)
     # built ok with https://github.com/niXman/mingw-builds-binaries/releases
