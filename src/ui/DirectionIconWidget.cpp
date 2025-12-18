@@ -7,13 +7,12 @@ void DirectionIconWidget::init()
 
 void DirectionIconWidget::setPosition(lv_align_t align, int32_t x_ofs, int32_t y_ofs)
 {
-    lv_obj_align(icon_m, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_align(icon_m, align, x_ofs, y_ofs);
 }
 
-void DirectionIconWidget::setSize(int32_t w, int32_t h)
+void DirectionIconWidget::setScale(int32_t zoom)
 {
-    lv_image_set_scale_x(icon_m, w);
-    lv_image_set_scale_y(icon_m, h);
+    lv_image_set_scale(icon_m, zoom);
 }
 
 void DirectionIconWidget::setIcon(NavigationModel::InstructionIcon icon)

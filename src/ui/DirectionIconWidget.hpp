@@ -10,8 +10,21 @@ class DirectionIconWidget
 public:
     DirectionIconWidget() = default;
     void init();
-    void setPosition(lv_align_t align, int32_t x_ofs, int32_t y_ofs);
-    void setSize(int32_t w, int32_t h);
+
+    /**
+     * @brief set icon position
+     * @param align
+     * @param x_ofs default 0
+     * @param y_ofs default 0
+     */
+    void setPosition(lv_align_t align, int32_t x_ofs = 0, int32_t y_ofs = 0);
+    
+    /**
+     * @brief set icon scale
+     * @param zoom
+     * @note refers to lv_image_set_scale
+     */
+    void setScale(int32_t zoom);
     void setIcon(NavigationModel::InstructionIcon icon);
     lv_obj_t *getObj() const
     {
