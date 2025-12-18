@@ -122,7 +122,7 @@ void ui_init()
     // Direction Icon
     directionIcon.init();
     directionIcon.setPosition(LV_ALIGN_CENTER, 0, -40);
-    directionIcon.setSize(160, 160);
+    directionIcon.setScale(512);
     updateNextInstructionIcon();
     Event::instance()->connect(directionIcon.getObj(), NavigationModel::NavigationEvents::EVENT_NEXT_INSTRUCTION_ICON_UPDATED, &updateNextInstructionIcon);
 

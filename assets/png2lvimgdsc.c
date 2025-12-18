@@ -72,9 +72,8 @@ int main(int argc, char **argv)
                 *tok = 0;
 
             strncpy(varName, outputFile, sizeof(varName));
-
-            snprintf(outputFile, sizeof(outputFile), "%s.c", outputFile);
-            printf("Output file: %s", outputFile);
+            snprintf(outputFile, sizeof(outputFile), "%s.c", varName);
+            printf("Output file: %s\r\n", outputFile);
             out = fopen(outputFile, "wb+");
 
             for (uint8_t i = 0; i < strlen(varName); i++)
