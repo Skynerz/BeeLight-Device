@@ -226,7 +226,7 @@ void ble_init() {
             Serial.printf("Rxed instruction sz %d\n", pCharacteristic->getLength());
             if(pCharacteristic->getLength() == 1) {
                 Serial.printf("Instruction icon Set: %d\n", pCharacteristic->getData()[0]);
-                NavigationModel::instance()->setNextInstructionIcon(static_cast<NavigationModel::InstructionIcon>(pCharacteristic->getData()[0]));  
+                NavigationModel::instance()->setNextInstructionIcon(static_cast<InstructionIcon::Values>(pCharacteristic->getData()[0]));  
             }
             else {
                 logger_m.warn("Rxed empty instruction icon");
