@@ -20,6 +20,18 @@ static TaskHandle_t lvgl_task_handle = nullptr;
 static esp_timer_handle_t lvgl_tick_timer = NULL;
 static void *lvgl_buf[LVGL_PORT_BUFFER_NUM_MAX] = {};
 
+#if LVGL_PORT_FULL_REFRESH == 0
+#if LV_COLOR_DEPTH == 16
+#define DEFAULT_COLOR lv_color16_t
+#else 
+#define DEFAULT_COLOR lv_color_t
+#endif
+static constexpr uint8_t WHITE = 0xff;
+#define COLOR_SIZE sizeof(DEFAULT_COLOR)
+#define PX_SIZE(w)  ((w) * COLOR_SIZE)
+static uint8_t widthFb[PX_SIZE(100 * 100)];
+#endif
+
 #if LVGL_PORT_AVOID_TEAR
 #if LVGL_PORT_DIRECT_MODE
 
@@ -115,10 +127,10 @@ static void rounder_callback(LCD *lcd, lv_area_t *area)
 void flush_callback(lv_display_t *drv, const lv_area_t *area, uint8_t *px_map)
 {
     LCD *lcd = (LCD *)lv_display_get_driver_data(drv);
-    const int offsetx1 = area->x1;
-    const int offsetx2 = area->x2;
-    const int offsety1 = area->y1;
-    const int offsety2 = area->y2;
+    lv_area_t old_area;
+    memcpy(&old_area, area, sizeof(lv_area_t));
+    auto oldWidth = area->x2 - area->x1 + 1;
+    auto oldHeight = area->y2 - area->y1 + 1;
 
     if ((lcd->getBasicAttributes().basic_bus_spec.x_coord_align > 1) ||
         (lcd->getBasicAttributes().basic_bus_spec.y_coord_align > 1))
@@ -126,7 +138,53 @@ void flush_callback(lv_display_t *drv, const lv_area_t *area, uint8_t *px_map)
         rounder_callback(lcd, (lv_area_t *)area);
     }
 
-    lcd->drawBitmap(offsetx1, offsety1, offsetx2 - offsetx1 + 1, offsety2 - offsety1 + 1, (const uint8_t *)px_map);
+    auto newWidth = area->x2 - area->x1 + 1;
+    auto newHeight = area->y2 - area->y1 + 1;
+
+#if LVGL_PORT_FULL_REFRESH == 0
+    if (oldHeight == newHeight && oldWidth == newWidth) // same size
+    {
+        lcd->drawBitmap(area->x1, area->y1, newWidth, newHeight, (const uint8_t *)px_map);
+    }
+    else
+    {
+        //ESP_UTILS_LOGW("before w %d h %d w2 %d w2 %d", oldWidth, oldHeight, newWidth, newHeight);
+        size_t allocSize = PX_SIZE(newWidth * newHeight);
+        if (allocSize > sizeof(widthFb))
+        {
+            ESP_UTILS_LOGW("area to draw bigger than buffer %d > %d", allocSize, sizeof(widthFb));
+            lcd->drawBitmap(area->x1, area->y1, newWidth, newHeight, (const uint8_t *)px_map);
+        }
+        else
+        {
+            uint8_t *pLineBuf = widthFb;
+            uint8_t *pLine = px_map;
+            for (uint16_t y = 0; y < newHeight; y++)
+            {
+                if (y < oldHeight)
+                {
+                    memcpy(pLineBuf, pLine, PX_SIZE(oldWidth));
+                    // new area wider
+                    if (oldWidth < newWidth)
+                    {
+                        memset(pLineBuf + PX_SIZE(oldWidth), WHITE, PX_SIZE(newWidth - oldWidth)); // fill white
+                    }
+                    pLine += PX_SIZE(oldWidth);
+                }
+                else
+                {
+                    // new area higher
+                    memset(pLineBuf, WHITE, PX_SIZE(newWidth));
+                }
+                pLineBuf += PX_SIZE(newWidth);
+            }
+            lcd->drawBitmap(area->x1, area->y1, newWidth, newHeight, (const uint8_t *)widthFb);
+        }
+    }
+#else
+    lcd->drawBitmap(old_area.x1, old_area.y1, oldWidth, oldHeight, (const uint8_t *)px_map);
+#endif
+
     // For RGB LCD, directly notify LVGL that the buffer is ready
     if (lcd->getBus()->getBasicAttributes().type == ESP_PANEL_BUS_TYPE_RGB) {
         lv_disp_flush_ready(drv);
@@ -146,7 +204,7 @@ static lv_display_t *display_init(LCD *lcd)
     auto lcd_height = lcd->getFrameHeight();
     int buffer_size = 0;
 
-    ESP_UTILS_LOGD("Malloc memory for LVGL buffer");
+    ESP_UTILS_LOGI("Malloc memory for LVGL buffer color_size = %d", COLOR_SIZE);
 #if !LVGL_PORT_AVOID_TEAR
     // Avoid tearing function is disabled
 #if (LVGL_PORT_BUFFER_MALLOC_CAPS == MALLOC_CAP_SPIRAM)
@@ -155,9 +213,9 @@ static lv_display_t *display_init(LCD *lcd)
     buffer_size = lcd_width * LVGL_PORT_BUFFER_SIZE_HEIGHT;
 #endif
     for (int i = 0; (i < LVGL_PORT_BUFFER_NUM) && (i < LVGL_PORT_BUFFER_NUM_MAX); i++) {
-        lvgl_buf[i] = heap_caps_malloc(buffer_size * sizeof(lv_color_t), LVGL_PORT_BUFFER_MALLOC_CAPS);
+        lvgl_buf[i] = heap_caps_malloc(PX_SIZE(buffer_size), LVGL_PORT_BUFFER_MALLOC_CAPS);
         assert(lvgl_buf[i]);
-        ESP_UTILS_LOGD("Buffer[%d] address: %p, size: %d", i, lvgl_buf[i], buffer_size * sizeof(lv_color_t));
+        ESP_UTILS_LOGI("Buffer[%d] address: %p, size: %d", i, lvgl_buf[i], PX_SIZE(buffer_size));
     }
 #else
     // To avoid the tearing effect, we should use at least two frame buffers: one for LVGL rendering and another for LCD refresh
@@ -191,7 +249,7 @@ static lv_display_t *display_init(LCD *lcd)
 #if (LVGL_PORT_BUFFER_MALLOC_CAPS == MALLOC_CAP_SPIRAM)
     lv_display_set_buffers(disp, lvgl_buf[0], lvgl_buf[1], buffer_size * sizeof(lv_color_t), LV_DISPLAY_RENDER_MODE_DIRECT);
 #else
-    lv_display_set_buffers(disp, lvgl_buf[0], lvgl_buf[1], buffer_size * sizeof(lv_color_t), LV_DISPLAY_RENDER_MODE_PARTIAL);
+    lv_display_set_buffers(disp, lvgl_buf[0], lvgl_buf[1], PX_SIZE(buffer_size), LV_DISPLAY_RENDER_MODE_PARTIAL);
 #endif
     return disp;
 }
@@ -267,7 +325,7 @@ static bool tick_deinit(void)
 
 static void lvgl_port_task(void *arg)
 {
-    ESP_UTILS_LOGD("Starting LVGL task");
+    ESP_UTILS_LOGI("Starting LVGL task");
 
     uint32_t task_delay_ms = LVGL_PORT_TASK_MAX_DELAY_MS;
     while (1) {
@@ -329,16 +387,16 @@ bool lvgl_port_init(LCD *lcd, Touch *tp, lv_display_t **out_disp)
     }
 
     if (tp != nullptr) {
-        ESP_UTILS_LOGD("Initialize LVGL input driver");
+        ESP_UTILS_LOGI("Initialize LVGL input driver");
         indev = indev_init(tp);
         ESP_UTILS_CHECK_NULL_RETURN(indev, false, "Initialize LVGL input driver failed");
     }
 
-    ESP_UTILS_LOGD("Create mutex for LVGL");
+    ESP_UTILS_LOGI("Create mutex for LVGL");
     lvgl_mux = xSemaphoreCreateRecursiveMutex();
     ESP_UTILS_CHECK_NULL_RETURN(lvgl_mux, false, "Create LVGL mutex failed");
 
-    ESP_UTILS_LOGD("Create LVGL task");
+    ESP_UTILS_LOGI("Create LVGL task");
     BaseType_t core_id = (LVGL_PORT_TASK_CORE < 0) ? tskNO_AFFINITY : LVGL_PORT_TASK_CORE;
     BaseType_t ret = xTaskCreatePinnedToCore(lvgl_port_task, "lvgl", LVGL_PORT_TASK_STACK_SIZE, NULL,
                      LVGL_PORT_TASK_PRIORITY, &lvgl_task_handle, core_id);
