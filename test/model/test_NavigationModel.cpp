@@ -27,7 +27,7 @@ TEST(NavigationModel, constructor)
     EXPECT_EQ(model.arrivingTime_m, UNDEFINED);
     EXPECT_EQ(model.nextInstruction_m, UNDEFINED);
     EXPECT_EQ(model.remainingDistanceBeforeNextInstruction_m, UNDEFINED);
-    EXPECT_EQ(model.nextInstructionIcon_m, NavigationModel::InstructionIcon::UNKNOWN);
+    EXPECT_EQ(model.nextInstructionIcon_m, InstructionIcon::UNKNOWN);
 
     EXPECT_EQ(registerEventCalledCount, 7);
     EXPECT_EQ(emitCalledCount, 0);
@@ -46,7 +46,7 @@ TEST(NavigationModel, reset)
     model.setArrivingTime("plop");
     model.setNextInstruction("plop");
     model.setRemainingDistanceBeforeNextInstruction("plop");
-    model.setNextInstructionIcon(NavigationModel::InstructionIcon::DEPART);
+    model.setNextInstructionIcon(InstructionIcon::DEPART);
     EXPECT_EQ(emitCalledCount, 7);
     model.reset();
     EXPECT_EQ(emitCalledCount, 14);
@@ -56,7 +56,7 @@ TEST(NavigationModel, reset)
     EXPECT_EQ(model.arrivingTime_m, UNDEFINED);
     EXPECT_EQ(model.nextInstruction_m, UNDEFINED);
     EXPECT_EQ(model.remainingDistanceBeforeNextInstruction_m, UNDEFINED);
-    EXPECT_EQ(model.nextInstructionIcon_m, NavigationModel::InstructionIcon::UNKNOWN);
+    EXPECT_EQ(model.nextInstructionIcon_m, InstructionIcon::UNKNOWN);
 }
 
 TEST(NavigationModel, CurrentTime)
@@ -165,8 +165,8 @@ TEST(NavigationModel, NextInstructionIcon)
 {
     NavigationModel model;
     emitCalledCount = 0;
-    NavigationModel::InstructionIcon instruction = NavigationModel::InstructionIcon::DEPART;
-    NavigationModel::InstructionIcon instruction2 = NavigationModel::InstructionIcon::DESTINATION;
+    InstructionIcon::Values instruction = InstructionIcon::Values::DEPART;
+    InstructionIcon::Values instruction2 = InstructionIcon::Values::DESTINATION;
     model.setNextInstructionIcon(instruction);
     EXPECT_EQ(model.getNextInstructionIcon(), instruction);
     EXPECT_EQ(emitCalledCount, 1);

@@ -1,4 +1,5 @@
 #include "DirectionIconWidget.hpp"
+#include "BeeLog.hpp"
 
 void DirectionIconWidget::init()
 {
@@ -15,11 +16,12 @@ void DirectionIconWidget::setScale(int32_t zoom)
     lv_image_set_scale(icon_m, zoom);
 }
 
-void DirectionIconWidget::setIcon(NavigationModel::InstructionIcon icon)
+void DirectionIconWidget::setIcon(InstructionIcon::Values icon)
 {
     auto it = icon_map_m.find(icon);
     if (it != icon_map_m.end())
     {
+        BeeLog::info("plop", "new icon" + InstructionIcon::toString(icon));
         lv_image_set_src(icon_m, it->second);
     }
     else

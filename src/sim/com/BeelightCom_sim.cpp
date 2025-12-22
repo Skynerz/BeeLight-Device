@@ -409,7 +409,7 @@ void BeelightCom_sim::simulationStep()
         }
 
         static uint8_t instructionIcon = 0;
-        model->setNextInstructionIcon(static_cast<NavigationModel::InstructionIcon>(instructionIcon));
-        instructionIcon = (instructionIcon + 1) % NavigationModel::InstructionIcon::NAME_CHANGE;
+        model->setNextInstructionIcon(static_cast<InstructionIcon::Values>(instructionIcon));
+        instructionIcon = (instructionIcon + 1) % InstructionIcon::Values::NAME_CHANGE;
     }
 }
