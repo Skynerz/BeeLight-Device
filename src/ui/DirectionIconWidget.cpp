@@ -21,7 +21,7 @@ void DirectionIconWidget::setIcon(InstructionIcon::Values icon)
     auto it = icon_map_m.find(icon);
     if (it != icon_map_m.end())
     {
-        BeeLog::info("plop", "new icon" + InstructionIcon::toString(icon));
+        BeeLog::debug("DirectionIconWidget", "new icon " + InstructionIcon::toString(icon));
         lv_image_set_src(icon_m, it->second);
     }
     else

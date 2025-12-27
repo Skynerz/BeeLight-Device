@@ -9,6 +9,7 @@
 #define ESP_UTILS_LOG_TAG "LvPort"
 #include "esp_lib_utils.h"
 #include "lvgl_v9_port.h"
+#include "common/fb_flush.h"
 
 using namespace esp_panel::drivers;
 
@@ -21,15 +22,18 @@ static esp_timer_handle_t lvgl_tick_timer = NULL;
 static void *lvgl_buf[LVGL_PORT_BUFFER_NUM_MAX] = {};
 
 #if LVGL_PORT_FULL_REFRESH == 0
+#if COMMON_FLUSH
+static void* internalFb;
+#else
 #if LV_COLOR_DEPTH == 16
-#define DEFAULT_COLOR lv_color16_t
+typedef lv_color16_t color_t;
 #else 
-#define DEFAULT_COLOR lv_color_t
+typedef lv_color_t color_t;
 #endif
 static constexpr uint8_t WHITE = 0xff;
-#define COLOR_SIZE sizeof(DEFAULT_COLOR)
+#define COLOR_SIZE sizeof(color_t)
 #define PX_SIZE(w)  ((w) * COLOR_SIZE)
-static uint8_t widthFb[PX_SIZE(100 * 100)];
+#endif
 #endif
 
 #if LVGL_PORT_AVOID_TEAR
@@ -102,7 +106,14 @@ IRAM_ATTR bool onLcdVsyncCallback(void *user_data)
 #endif
     return (need_yield == pdTRUE);
 }
-
+#elif COMMON_FLUSH
+static void flush_callback(lv_display_t *drv, const lv_area_t *area, uint8_t *px_map)
+{
+    LCD *lcd = (LCD *)lv_display_get_driver_data(drv);
+    int32_t width, height;
+    fb_flush_compute_area(area, &width, &height);
+    lcd->drawBitmap(area->x1, area->y1, width, height, (const uint8_t *)px_map);
+}
 #else
 static void rounder_callback(LCD *lcd, lv_area_t *area)
 {
@@ -148,16 +159,16 @@ void flush_callback(lv_display_t *drv, const lv_area_t *area, uint8_t *px_map)
     }
     else
     {
-        //ESP_UTILS_LOGW("before w %d h %d w2 %d w2 %d", oldWidth, oldHeight, newWidth, newHeight);
+        ESP_UTILS_LOGD("before w %d h %d w2 %d w2 %d", oldWidth, oldHeight, newWidth, newHeight);
         size_t allocSize = PX_SIZE(newWidth * newHeight);
-        if (allocSize > sizeof(widthFb))
+        if (allocSize > sizeof(tempFb))
         {
-            ESP_UTILS_LOGW("area to draw bigger than buffer %d > %d", allocSize, sizeof(widthFb));
+            ESP_UTILS_LOGW("area to draw bigger than buffer %d > %d", allocSize, sizeof(tempFb));
             lcd->drawBitmap(area->x1, area->y1, newWidth, newHeight, (const uint8_t *)px_map);
         }
         else
         {
-            uint8_t *pLineBuf = widthFb;
+            uint8_t *pLineBuf = tempFb;
             uint8_t *pLine = px_map;
             for (uint16_t y = 0; y < newHeight; y++)
             {
@@ -178,7 +189,7 @@ void flush_callback(lv_display_t *drv, const lv_area_t *area, uint8_t *px_map)
                 }
                 pLineBuf += PX_SIZE(newWidth);
             }
-            lcd->drawBitmap(area->x1, area->y1, newWidth, newHeight, (const uint8_t *)widthFb);
+            lcd->drawBitmap(area->x1, area->y1, newWidth, newHeight, (const uint8_t *)tempFb);
         }
     }
 #else
@@ -215,8 +226,8 @@ static lv_display_t *display_init(LCD *lcd)
     for (int i = 0; (i < LVGL_PORT_BUFFER_NUM) && (i < LVGL_PORT_BUFFER_NUM_MAX); i++) {
         lvgl_buf[i] = heap_caps_malloc(PX_SIZE(buffer_size), LVGL_PORT_BUFFER_MALLOC_CAPS);
         assert(lvgl_buf[i]);
-        ESP_UTILS_LOGI("Buffer[%d] address: %p, size: %d", i, lvgl_buf[i], PX_SIZE(buffer_size));
-    }
+        ESP_UTILS_LOGD("Buffer[%d] address: %p -> %p, size: %d", i, lvgl_buf[i], lvgl_buf[i] + PX_SIZE(buffer_size), PX_SIZE(buffer_size));
+    }    
 #else
     // To avoid the tearing effect, we should use at least two frame buffers: one for LVGL rendering and another for LCD refresh
     buffer_size = lcd_width * lcd_height;
@@ -249,7 +260,13 @@ static lv_display_t *display_init(LCD *lcd)
 #if (LVGL_PORT_BUFFER_MALLOC_CAPS == MALLOC_CAP_SPIRAM)
     lv_display_set_buffers(disp, lvgl_buf[0], lvgl_buf[1], buffer_size * sizeof(lv_color_t), LV_DISPLAY_RENDER_MODE_DIRECT);
 #else
-    lv_display_set_buffers(disp, lvgl_buf[0], lvgl_buf[1], PX_SIZE(buffer_size), LV_DISPLAY_RENDER_MODE_PARTIAL);
+    ESP_UTILS_LOGD("Buffer[%d] address: %p -> %p, size: %d", internalFb, internalFb + PX_SIZE(lcd_width * lcd_height));
+    lv_display_set_buffers(disp, lvgl_buf[0], NULL, PX_SIZE(buffer_size), LV_DISPLAY_RENDER_MODE_PARTIAL);
+    lv_display_set_flush_cb(disp, fb_flush_callback);
+    fb_flush_init(lvgl_buf[1], PX_SIZE(buffer_size), flush_callback,
+                  ((lcd->getBus()->getBasicAttributes().type == ESP_PANEL_BUS_TYPE_RGB) ? 1 : 0),
+                  lcd->getBasicAttributes().basic_bus_spec.x_coord_align,
+                  lcd->getBasicAttributes().basic_bus_spec.y_coord_align);
 #endif
     return disp;
 }
@@ -346,7 +363,7 @@ IRAM_ATTR bool onDrawBitmapFinishCallback(void *user_data)
 {
     lv_display_t *disp = (lv_display_t *)user_data;
 
-    lv_disp_flush_ready(disp);
+    lv_display_flush_ready(disp);
 
     return false;
 }

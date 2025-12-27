@@ -4,7 +4,7 @@ else()
     set(TARGET emb)
 endif()
     
-file(GLOB common_src CONFIGURE_DEPENDS "${SRC_DIR}/*.cpp")
+file(GLOB common_src CONFIGURE_DEPENDS "${SRC_DIR}/*.cpp" "${SRC_DIR}/common/*.c*")
 file(GLOB_RECURSE target_src CONFIGURE_DEPENDS "${SRC_DIR}/${TARGET}/*.cpp")
 set(target_inc "${SRC_DIR}/${TARGET}/")
 file(GLOB_RECURSE ui_src CONFIGURE_DEPENDS "${SRC_DIR}/ui/*.cpp")
