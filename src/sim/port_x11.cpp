@@ -1,8 +1,10 @@
-#if CONFIG_LV_USE_X11
+#include <lvgl.h>
 
+#if LV_USE_X11
 #include "BeelightApp.hpp"
 #include "port.hpp" 
 #include "BeeLog.hpp"
+#include "port_x11_custom_flush.hpp"
 #include <unistd.h> //todo windows alt
 #include <csignal>
 
@@ -20,7 +22,7 @@ void setup() {
     LV_IMAGE_DECLARE(img_hand_cursor);
 
     disp = lv_x11_window_create("beelight-simulator", MY_DISP_HOR_RES, MY_DISP_VER_RES);
-    
+    x11_flush_init(disp);
     /* initialize X11 input drivers (for keyboard, mouse & mousewheel) */
     lv_x11_inputs_create(disp, &img_hand_cursor);
 
@@ -44,6 +46,7 @@ void setup() {
 
 void tearDown() {
     lv_deinit();
+    x11_flush_deinit();
     BeeLog::debug("deinit", "Deinitialized LVGL");
 }
 

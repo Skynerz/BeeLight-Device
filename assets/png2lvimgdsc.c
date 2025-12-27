@@ -96,7 +96,7 @@ int main(int argc, char **argv)
                     for(uint8_t i = 0 ; i < 4 ; i++){
                         ((uint8_t*)&h) [i] = inBuffer[23 - i];
                     }
-                    printf("img size %xx%x\r\n", w, h);
+                    printf("img size %dx%d\r\n", w, h);
                     
                     pngHeaderRead = 1;
                 }

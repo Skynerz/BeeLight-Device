@@ -1,7 +1,7 @@
  #!/bin/bash
 
 TOOL_PATH=`pwd`
-TARGET_WIDTH=100
+TARGET_WIDTH=80
 
 mkdir tmp
 cp *.png tmp

@@ -29,7 +29,7 @@ if(SIMULATOR)
     message("Simulator BUILD")
     set(CUSTOM_DEFS 
         SIMULATOR=1 
-        MEMSIZE_KB=384
+        MEMSIZE_KB=64
         CONFIG_LV_USE_SYSMON=1 
         CONFIG_LV_USE_MEM_MONITOR=1
         CONFIG_LV_USE_PERF_MONITOR=1
@@ -56,9 +56,12 @@ if(SIMULATOR)
     else()
         message("X11 BUILD")
         set(CUSTOM_DEFS ${CUSTOM_DEFS}      
-            CONFIG_LV_USE_X11=1
+            LV_USE_X11=1
+            LV_X11_RENDER_MODE_PARTIAL=1
             LV_USE_OS=LV_OS_NONE
-            LVGL_CUSTOM_LOG=0
+            LVGL_CUSTOM_LOG=1
+            COMMON_FLUSH=1
+            #INVERT_COLORS=1
         )
     endif()
     # set_property(GLOBAL PROPERTY HAS_PARENT_SCOPE true)
