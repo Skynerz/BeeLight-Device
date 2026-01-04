@@ -12,6 +12,9 @@
 #else
 #include <string>
 #include <cstdint>
+#include <AbstractScreen.hpp>
+#include "DirectionIconWidget.hpp"
+
 using String = std::string; //todo
 #endif
 
@@ -22,11 +25,22 @@ using String = std::string; //todo
 /* Exported macros -----------------------------------------------------------*/
 
 /* Exported function prototypes ----------------------------------------------*/
-void ui_init();
 
 // Setters
 void setDirectionIcon(const uint8_t *iconData, size_t iconSize);
 
 void setConnected(const bool connected);
+
+class Dashboard : public AbstractScreen
+{
+public:
+    using AbstractScreen::AbstractScreen;
+    void populate() override;
+    void onTimerEvent() override;
+
+private:
+    DirectionIconWidget directionIcon_m;
+    void updateNextInstructionIcon(lv_event_t *event = nullptr);
+};
 
 #endif /* UI_H */
