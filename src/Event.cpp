@@ -21,6 +21,14 @@ void Event::connect(lv_obj_t* obj, uint8_t eventId, lv_event_cb_t cb, void* data
     }
 }
 
+void Event::disconnect(lv_obj_t* obj, uint8_t eventId, lv_event_cb_t cb) {
+    auto event = instance()->getLvEvent(eventId);
+    if (event && obj) {
+        event->second = NULL;
+        lv_obj_remove_event_cb(obj, cb);
+    }
+}
+
 Event::EventHandler* Event::getLvEvent(uint8_t eventId) {
     auto it = registeredEvents_m.find(eventId);
     if (it != registeredEvents_m.end()) {

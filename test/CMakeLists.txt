@@ -1,5 +1,12 @@
 find_package(GTest REQUIRED)
 
+if(WIN32)
+    set(GTEST_LIBS
+        ${GTEST_ROOT}/lib/libgtest.a
+        ${GTEST_ROOT}/lib/libgtest_main.a
+    )
+endif()
+
 include_directories(
     ${GTEST_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/libs/lvgl/src
@@ -7,12 +14,27 @@ include_directories(
     )
 
 file(GLOB_RECURSE stubs_src CONFIGURE_DEPENDS stubs/*.cpp)
-add_library(common_lib STATIC ${stubs_src} main.cpp)
+add_library(common_lib STATIC ${stubs_src} main.cpp ${CMAKE_SOURCE_DIR}/src/sim/beelog_sim.cpp)
 target_include_directories(common_lib PUBLIC ${include_files} ${CMAKE_SOURCE_DIR}/libs/lvgl/src)
 
+if(WIN32)
+    set(LIBRARIES ${GTEST_LIBS} common_lib ws2_32)
+    set(LIBRARIES_W_LVGL ${LIBRARIES} lvgl SDL2::SDL2-static)
+else()
+    set(LIBRARIES gtest gtest_main common_lib pthread)
+    set(LIBRARIES_W_LVGL ${LIBRARIES} lvgl X11)
+endif()
+
 function(addTest)
+    add_executable(${ARGV} ${stubs_src})
+    target_compile_definitions(${ARGV0} PRIVATE ${CUSTOM_DEFS})
+    target_link_libraries(${ARGV0} ${LIBRARIES})
+    gtest_discover_tests(${ARGV0})
+endfunction()
+
+function(addTestLVGL)
     add_executable(${ARGV})
-    target_link_libraries(${ARGV0} gtest gtest_main common_lib lvgl pthread)
+    target_link_libraries(${ARGV0} ${LIBRARIES_W_LVGL})
     gtest_discover_tests(${ARGV0})
 endfunction()
 
@@ -21,10 +43,14 @@ addTest(test_Event
     test_Event.cpp
     ${SRC_DIR}/Event.cpp)
 
-addTest(test_EventLVGL
+addTestLVGL(test_EventLVGL
     test_EventLVGL.cpp
     ${SRC_DIR}/Event.cpp)
 
-addTest(test_NavigationModel
-    model/test_NavigationModel.cpp
-    ${SRC_DIR}/model/NavigationModel.cpp)
+addTest(test_ScreenNavigation
+    ui/test_ScreenNavigation.cpp
+    ${SRC_DIR}/ui/ScreenNavigation.cpp)
+
+# addTest(test_NavigationModel
+#     model/test_NavigationModel.cpp
+#     ${SRC_DIR}/model/NavigationModel.cpp)

@@ -8,16 +8,16 @@
 
 static char message[256];
 std::mutex msg_mtx;
-std::unique_lock msg_lock{msg_mtx, std::defer_lock};
 
 void beelog_print(const unsigned char logLevel, const char *tag, const char *format, ...) {
     va_list args;
     /* Initialize the va_list structure */
     va_start(args, format);
 
-    msg_lock.lock();
+#ifndef WIN32
+    std::lock_guard<std::mutex> msg_lock(msg_mtx);
+#endif
     vsnprintf(message, sizeof(message), format, args);
-    msg_lock.unlock();
     va_end(args);
     switch (logLevel) {
         default:

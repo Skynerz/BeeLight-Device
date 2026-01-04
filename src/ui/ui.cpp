@@ -3,8 +3,8 @@
 #include <lvgl.h>
 #include <string.h>
 
-#include "DirectionIconWidget.hpp"
-#include "Event.hpp"
+#include "ScreenNavigation.hpp"
+#include "SplashScreen.hpp"
 #include "model/NavigationModel.hpp"
 #include "port.hpp"
 
@@ -20,7 +20,6 @@ static lv_obj_t *directionLabel;
 static lv_obj_t *directionDistanceLabel;
 
 static lv_obj_t *connectionStateLabel;
-static DirectionIconWidget directionIcon;
 static uint8_t *iconCopy = nullptr;
 
 static lv_style_t curvedLabelStyle;
@@ -60,31 +59,25 @@ static void updateDirectionDistanceLabel(lv_event_t *event = nullptr) {
                       NavigationModel::instance()->getRemainingDistanceBeforeNextInstruction().c_str());
 }
 
-static void updateNextInstructionIcon(lv_event_t *event = nullptr) {
-    directionIcon.setIcon(NavigationModel::instance()->getNextInstructionIcon());
+void Dashboard::updateNextInstructionIcon(lv_event_t *event) {
+    DirectionIconWidget *widget = (DirectionIconWidget *) lv_event_get_user_data(event);
+    widget->setIcon(NavigationModel::instance()->getNextInstructionIcon());
 }
 
-void ui_init() {
+void Dashboard::populate() {
     auto navModel = NavigationModel::instance();
-    // lv_scr_col lv_scr_act();
 
     init_styles();
-#ifdef SIMULATOR
-    screenBg = lv_obj_create(lv_scr_act());
-    lv_obj_set_size(screenBg, getScreenWidth(), getScreenHeight());
-    lv_obj_set_style_bg_color(screenBg, lv_color_hex(0xFFFFFF), 0);
-    lv_obj_set_style_radius(screenBg, getScreenWidth() / 2, 0);
-#endif
+
     // Current Time
-    timeLabel = lv_label_create(lv_screen_active());
+    timeLabel = lv_label_create(obj());
     updateCurrentTime();
-    Event::instance()->connect(timeLabel, NavigationModel::NavigationEvents::EVENT_CURRENT_TIME_UPDATED,
-                               &updateCurrentTime);
+    connect(timeLabel, NavigationModel::NavigationEvents::EVENT_CURRENT_TIME_UPDATED, &updateCurrentTime);
     lv_obj_align(timeLabel, LV_ALIGN_CENTER, 0, -150);
     lv_obj_add_style(timeLabel, &timeStyle, 0);
 
     // Estimated Time Arrival section curved label
-    etaLabel = lv_arclabel_create(lv_scr_act());
+    etaLabel = lv_arclabel_create(obj());
     lv_obj_set_size(etaLabel, getScreenWidth(), getScreenHeight());
     lv_obj_set_style_text_letter_space(etaLabel, 0, LV_PART_MAIN);
     lv_obj_add_style(etaLabel, &curvedLabelStyle, LV_PART_MAIN);
@@ -96,10 +89,10 @@ void ui_init() {
     lv_arclabel_set_text_horizontal_align(etaLabel, LV_ARCLABEL_TEXT_ALIGN_CENTER);
     lv_obj_center(etaLabel);
     updateEta();
-    Event::instance()->connect(etaLabel, NavigationModel::NavigationEvents::EVENT_EST_TIME_ARRIVAL_UPDATED, &updateEta);
+    connect(etaLabel, NavigationModel::NavigationEvents::EVENT_EST_TIME_ARRIVAL_UPDATED, &updateEta);
 
     // Estimated Distance Arrival section curved label
-    edaLabel = lv_arclabel_create(lv_scr_act());
+    edaLabel = lv_arclabel_create(obj());
     lv_obj_set_size(edaLabel, getScreenWidth(), getScreenHeight());
     lv_obj_set_style_text_letter_space(edaLabel, 0, LV_PART_MAIN);
     lv_obj_add_style(edaLabel, &curvedLabelStyle, LV_PART_MAIN);
@@ -111,41 +104,33 @@ void ui_init() {
     lv_arclabel_set_text_horizontal_align(edaLabel, LV_ARCLABEL_TEXT_ALIGN_CENTER);
     lv_obj_center(edaLabel);
     updateEda();
-    Event::instance()->connect(edaLabel, NavigationModel::NavigationEvents::EVENT_EST_DISTANCE_ARRIVAL_UPDATED,
-                               &updateEda);
+    connect(edaLabel, NavigationModel::NavigationEvents::EVENT_EST_DISTANCE_ARRIVAL_UPDATED, &updateEda);
 
     // Direction Icon
-    directionIcon.init();
-    directionIcon.setPosition(LV_ALIGN_CENTER, 0, -40);
-    directionIcon.setScale(512);
-    updateNextInstructionIcon();
-    Event::instance()->connect(directionIcon.getObj(),
-                               NavigationModel::NavigationEvents::EVENT_NEXT_INSTRUCTION_ICON_UPDATED,
-                               &updateNextInstructionIcon);
+    directionIcon_m.setPosition(LV_ALIGN_CENTER, 0, -40);
+    directionIcon_m.setScale(512);
 
     // Direction label
-    directionLabel = lv_label_create(lv_screen_active());
+    directionLabel = lv_label_create(obj());
     lv_obj_set_width(directionLabel, 300);
     lv_label_set_long_mode(directionLabel, LV_LABEL_LONG_WRAP);
     lv_obj_set_style_text_align(directionLabel, LV_TEXT_ALIGN_CENTER, 0);
     updateDirection();
-    Event::instance()->connect(directionLabel, NavigationModel::NavigationEvents::EVENT_NEXT_INSTRUCTION_UPDATED,
-                               &updateDirection);
+    connect(directionLabel, NavigationModel::NavigationEvents::EVENT_NEXT_INSTRUCTION_UPDATED, &updateDirection);
     lv_obj_set_style_text_font(directionLabel, &lv_font_montserrat_26, 0);
     lv_obj_align(directionLabel, LV_ALIGN_CENTER, 0, 70);
 
     // Distance next instruction
-    directionDistanceLabel = lv_label_create(lv_screen_active());
+    directionDistanceLabel = lv_label_create(obj());
     lv_obj_set_style_text_align(directionDistanceLabel, LV_TEXT_ALIGN_CENTER, 0);
     updateDirectionDistanceLabel();
-    Event::instance()->connect(directionDistanceLabel,
-                               NavigationModel::NavigationEvents::EVENT_REMAINING_DISTANCE_UPDATED,
-                               &updateDirectionDistanceLabel);
+    connect(directionDistanceLabel, NavigationModel::NavigationEvents::EVENT_REMAINING_DISTANCE_UPDATED,
+            &updateDirectionDistanceLabel);
     lv_obj_set_style_text_font(directionDistanceLabel, &lv_font_montserrat_30, 0);
     lv_obj_align(directionDistanceLabel, LV_ALIGN_CENTER, 0, 150);
 
     // Connection state label
-    connectionStateLabel = lv_label_create(lv_screen_active());
+    connectionStateLabel = lv_label_create(obj());
     lv_label_set_text(connectionStateLabel, "Disc.");
     lv_obj_set_style_text_align(connectionStateLabel, LV_TEXT_ALIGN_LEFT, 0);
     lv_obj_set_style_text_font(connectionStateLabel, &lv_font_montserrat_20, 0);
@@ -197,4 +182,23 @@ void setDirectionIcon(const uint8_t *iconData, size_t iconSize) {
 
 void setConnected(const bool connected) {
     lv_label_set_text(connectionStateLabel, connected ? "Conn." : "Disc.");
+}
+
+void Dashboard::onTimerEvent() {
+    tick_m++;
+
+    if (tick_m > 2) {
+        ScreenNavigation::instance()->navigateTo<SplashScreen>(NavigationTransition::FADE_IN, false);
+    }
+}
+
+void Dashboard::onPostPopulate() {
+    AbstractScreen::onPostPopulate();
+    directionIcon_m.setIcon(NavigationModel::instance()->getNextInstructionIcon());
+}
+
+void Dashboard::onScreenLoaded() {
+    AbstractScreen::onScreenLoaded();
+    connect(directionIcon_m.getObj(), NavigationModel::NavigationEvents::EVENT_NEXT_INSTRUCTION_ICON_UPDATED,
+            &updateNextInstructionIcon, &directionIcon_m);
 }

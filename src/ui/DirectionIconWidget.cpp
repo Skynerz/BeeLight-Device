@@ -2,8 +2,8 @@
 
 #include "BeeLog.hpp"
 
-void DirectionIconWidget::init() {
-    icon_m = lv_image_create(lv_screen_active());
+DirectionIconWidget::DirectionIconWidget(lv_obj_t* parent) {
+    icon_m = lv_image_create(parent);
 }
 
 void DirectionIconWidget::setPosition(lv_align_t align, int32_t x_ofs, int32_t y_ofs) {
