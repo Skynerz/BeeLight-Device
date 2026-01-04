@@ -1,27 +1,28 @@
-#include "ui_mainwindow.h"
 #include <QObject>
 #include <QThread>
 #include <memory>
-#include "beelight_client.hpp"
 
-class CurrentTimeUpdater : public QThread
-{
+#include "beelight_client.hpp"
+#include "ui_mainwindow.h"
+
+class CurrentTimeUpdater : public QThread {
     Q_OBJECT
-public:
-    explicit CurrentTimeUpdater(QObject *parent = nullptr) : QThread(parent) { }
-public:
+   public:
+    explicit CurrentTimeUpdater(QObject *parent = nullptr) : QThread(parent) {
+    }
+
+   public:
     void run();
-signals:
-     void currentTimeUpdated(const QString &currentTime);
+   signals:
+    void currentTimeUpdated(const QString &currentTime);
 };
 
-class MainWindow : public QObject, public Ui_MainWindow
-{
+class MainWindow : public QObject, public Ui_MainWindow {
     Q_OBJECT
-public:
-    MainWindow(QObject* parent = nullptr);
+   public:
+    MainWindow(QObject *parent = nullptr);
 
-public slots:
+   public slots:
     void updateConnectButtonState(BeelightClient::ConnectState state);
     void updateCurrentTime(const QString &currentTime);
     void onWriteCurrentTimeClicked();
@@ -35,7 +36,8 @@ public slots:
     void onReadNextInstructionlicked();
     void onWriteRemainingDistanceBeforeNextInstructionClicked();
     void onReadRemainingDistanceBeforeNextInstructionlicked();
-private:
+
+   private:
     std::shared_ptr<QMainWindow> w;
     BeelightClient client{this};
     CurrentTimeUpdater timeUpdater_m{this};

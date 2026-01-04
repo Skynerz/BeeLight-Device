@@ -1,8 +1,9 @@
 #include "BeelightApp.hpp"
-#include "port.hpp"
+
 #include "BeeLog.hpp"
 #include "Event.hpp"
 #include "model/NavigationModel.hpp"
+#include "port.hpp"
 #include "ui/ui.h"
 #ifdef SIMULATOR
 #include "sim/com/BeelightCom_sim.hpp"
@@ -23,7 +24,7 @@ void BeelightApp_init() {
     ui_init();
 }
 
-void BeelightApp_deinit(){
+void BeelightApp_deinit() {
 #ifdef SIMULATOR
     BeelightCom_sim::instance()->uninit();
 #endif
