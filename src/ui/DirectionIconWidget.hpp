@@ -8,8 +8,7 @@
 class DirectionIconWidget
 {
 public:
-    DirectionIconWidget() = default;
-    void init();
+    explicit DirectionIconWidget(lv_obj_t* parent);
 
     /**
      * @brief set icon position
