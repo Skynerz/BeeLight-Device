@@ -17,3 +17,19 @@ They really did a good job on the design and the user experience. However, I fou
 
 Finally, I had in mind that the user should not change his habits using this device by using a dedicated navigation app. So I wanted to use the same app as the one used on the phone, and just mirror the navigation instructions on the display.
 
+# Development
+
+## Tools
+
+- cmake
+- google-test
+- clang-format
+- pre-commit
+```
+pip install pre-commit
+```
+Before each commit: (TBD git hook)
+```
+pre-commit run -a
+```
+Don't forget to review and stage modified files.

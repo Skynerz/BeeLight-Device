@@ -7,41 +7,40 @@
 #include "esp_timer.h"
 #undef ESP_UTILS_LOG_TAG
 #define ESP_UTILS_LOG_TAG "LvPort"
+#include "common/fb_flush.h"
 #include "esp_lib_utils.h"
 #include "lvgl_v9_port.h"
-#include "common/fb_flush.h"
 
 using namespace esp_panel::drivers;
 
-#define LVGL_PORT_ENABLE_ROTATION_OPTIMIZED     (1)
-#define LVGL_PORT_BUFFER_NUM_MAX                (2)
+#define LVGL_PORT_ENABLE_ROTATION_OPTIMIZED (1)
+#define LVGL_PORT_BUFFER_NUM_MAX (2)
 
-static SemaphoreHandle_t lvgl_mux = nullptr;                  // LVGL mutex
-static TaskHandle_t lvgl_task_handle = nullptr;
-static esp_timer_handle_t lvgl_tick_timer = NULL;
+static SemaphoreHandle_t lvgl_mux               = nullptr;  // LVGL mutex
+static TaskHandle_t lvgl_task_handle            = nullptr;
+static esp_timer_handle_t lvgl_tick_timer       = NULL;
 static void *lvgl_buf[LVGL_PORT_BUFFER_NUM_MAX] = {};
 
 #if LVGL_PORT_FULL_REFRESH == 0
 #if COMMON_FLUSH
-static void* internalFb;
+static void *internalFb;
 #else
 #if LV_COLOR_DEPTH == 16
 typedef lv_color16_t color_t;
-#else 
+#else
 typedef lv_color_t color_t;
 #endif
 static constexpr uint8_t WHITE = 0xff;
 #define COLOR_SIZE sizeof(color_t)
-#define PX_SIZE(w)  ((w) * COLOR_SIZE)
+#define PX_SIZE(w) ((w) * COLOR_SIZE)
 #endif
 #endif
 
 #if LVGL_PORT_AVOID_TEAR
 #if LVGL_PORT_DIRECT_MODE
 
-static void flush_callback(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_map)
-{
-    LCD *lcd = (LCD *)drv->user_data;
+static void flush_callback(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_map) {
+    LCD *lcd = (LCD *) drv->user_data;
 
     /* Action after last area refresh */
     if (lv_disp_flush_is_last(drv)) {
@@ -58,9 +57,8 @@ static void flush_callback(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t
 
 #elif LVGL_PORT_FULL_REFRESH && LVGL_PORT_DISP_BUFFER_NUM == 2
 
-static void flush_callback(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_map)
-{
-    LCD *lcd = (LCD *)drv->user_data;
+static void flush_callback(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_map) {
+    LCD *lcd = (LCD *) drv->user_data;
 
     /* Switch the current LCD frame buffer to `color_map` */
     lcd->switchFrameBufferTo(color_map);
@@ -74,12 +72,11 @@ static void flush_callback(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t
 
 #elif LVGL_PORT_FULL_REFRESH && LVGL_PORT_DISP_BUFFER_NUM == 3
 
-void flush_callback(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_map)
-{
-    LCD *lcd = (LCD *)drv->user_data;
+void flush_callback(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_map) {
+    LCD *lcd = (LCD *) drv->user_data;
 
-    drv->draw_buf->buf1 = color_map;
-    drv->draw_buf->buf2 = lvgl_port_flush_next_buf;
+    drv->draw_buf->buf1      = color_map;
+    drv->draw_buf->buf2      = lvgl_port_flush_next_buf;
     lvgl_port_flush_next_buf = color_map;
 
     /* Switch the current LCD frame buffer to `color_map` */
@@ -91,32 +88,29 @@ void flush_callback(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color
 }
 #endif
 
-IRAM_ATTR bool onLcdVsyncCallback(void *user_data)
-{
+IRAM_ATTR bool onLcdVsyncCallback(void *user_data) {
     BaseType_t need_yield = pdFALSE;
 #if LVGL_PORT_FULL_REFRESH && (LVGL_PORT_DISP_BUFFER_NUM == 3) && (LVGL_PORT_ROTATION_DEGREE == 0)
     if (lvgl_port_lcd_next_buf != lvgl_port_lcd_last_buf) {
         lvgl_port_flush_next_buf = lvgl_port_lcd_last_buf;
-        lvgl_port_lcd_last_buf = lvgl_port_lcd_next_buf;
+        lvgl_port_lcd_last_buf   = lvgl_port_lcd_next_buf;
     }
 #else
-    TaskHandle_t task_handle = (TaskHandle_t)user_data;
+    TaskHandle_t task_handle = (TaskHandle_t) user_data;
     // Notify that the current LCD frame buffer has been transmitted
     xTaskNotifyFromISR(task_handle, ULONG_MAX, eNoAction, &need_yield);
 #endif
     return (need_yield == pdTRUE);
 }
 #elif COMMON_FLUSH
-static void flush_callback(lv_display_t *drv, const lv_area_t *area, uint8_t *px_map)
-{
-    LCD *lcd = (LCD *)lv_display_get_driver_data(drv);
+static void flush_callback(lv_display_t *drv, const lv_area_t *area, uint8_t *px_map) {
+    LCD *lcd = (LCD *) lv_display_get_driver_data(drv);
     int32_t width, height;
     fb_flush_compute_area(area, &width, &height);
-    lcd->drawBitmap(area->x1, area->y1, width, height, (const uint8_t *)px_map);
+    lcd->drawBitmap(area->x1, area->y1, width, height, (const uint8_t *) px_map);
 }
 #else
-static void rounder_callback(LCD *lcd, lv_area_t *area)
-{
+static void rounder_callback(LCD *lcd, lv_area_t *area) {
     uint8_t x_align = lcd->getBasicAttributes().basic_bus_spec.x_coord_align;
     uint8_t y_align = lcd->getBasicAttributes().basic_bus_spec.y_coord_align;
 
@@ -135,65 +129,54 @@ static void rounder_callback(LCD *lcd, lv_area_t *area)
     }
 }
 
-void flush_callback(lv_display_t *drv, const lv_area_t *area, uint8_t *px_map)
-{
-    LCD *lcd = (LCD *)lv_display_get_driver_data(drv);
+void flush_callback(lv_display_t *drv, const lv_area_t *area, uint8_t *px_map) {
+    LCD *lcd = (LCD *) lv_display_get_driver_data(drv);
     lv_area_t old_area;
     memcpy(&old_area, area, sizeof(lv_area_t));
-    auto oldWidth = area->x2 - area->x1 + 1;
+    auto oldWidth  = area->x2 - area->x1 + 1;
     auto oldHeight = area->y2 - area->y1 + 1;
 
     if ((lcd->getBasicAttributes().basic_bus_spec.x_coord_align > 1) ||
-        (lcd->getBasicAttributes().basic_bus_spec.y_coord_align > 1))
-    {
-        rounder_callback(lcd, (lv_area_t *)area);
+        (lcd->getBasicAttributes().basic_bus_spec.y_coord_align > 1)) {
+        rounder_callback(lcd, (lv_area_t *) area);
     }
 
-    auto newWidth = area->x2 - area->x1 + 1;
+    auto newWidth  = area->x2 - area->x1 + 1;
     auto newHeight = area->y2 - area->y1 + 1;
 
 #if LVGL_PORT_FULL_REFRESH == 0
-    if (oldHeight == newHeight && oldWidth == newWidth) // same size
+    if (oldHeight == newHeight && oldWidth == newWidth)  // same size
     {
-        lcd->drawBitmap(area->x1, area->y1, newWidth, newHeight, (const uint8_t *)px_map);
-    }
-    else
-    {
+        lcd->drawBitmap(area->x1, area->y1, newWidth, newHeight, (const uint8_t *) px_map);
+    } else {
         ESP_UTILS_LOGD("before w %d h %d w2 %d w2 %d", oldWidth, oldHeight, newWidth, newHeight);
         size_t allocSize = PX_SIZE(newWidth * newHeight);
-        if (allocSize > sizeof(tempFb))
-        {
+        if (allocSize > sizeof(tempFb)) {
             ESP_UTILS_LOGW("area to draw bigger than buffer %d > %d", allocSize, sizeof(tempFb));
-            lcd->drawBitmap(area->x1, area->y1, newWidth, newHeight, (const uint8_t *)px_map);
-        }
-        else
-        {
+            lcd->drawBitmap(area->x1, area->y1, newWidth, newHeight, (const uint8_t *) px_map);
+        } else {
             uint8_t *pLineBuf = tempFb;
-            uint8_t *pLine = px_map;
-            for (uint16_t y = 0; y < newHeight; y++)
-            {
-                if (y < oldHeight)
-                {
+            uint8_t *pLine    = px_map;
+            for (uint16_t y = 0; y < newHeight; y++) {
+                if (y < oldHeight) {
                     memcpy(pLineBuf, pLine, PX_SIZE(oldWidth));
                     // new area wider
-                    if (oldWidth < newWidth)
-                    {
-                        memset(pLineBuf + PX_SIZE(oldWidth), WHITE, PX_SIZE(newWidth - oldWidth)); // fill white
+                    if (oldWidth < newWidth) {
+                        memset(pLineBuf + PX_SIZE(oldWidth), WHITE,
+                               PX_SIZE(newWidth - oldWidth));  // fill white
                     }
                     pLine += PX_SIZE(oldWidth);
-                }
-                else
-                {
+                } else {
                     // new area higher
                     memset(pLineBuf, WHITE, PX_SIZE(newWidth));
                 }
                 pLineBuf += PX_SIZE(newWidth);
             }
-            lcd->drawBitmap(area->x1, area->y1, newWidth, newHeight, (const uint8_t *)tempFb);
+            lcd->drawBitmap(area->x1, area->y1, newWidth, newHeight, (const uint8_t *) tempFb);
         }
     }
 #else
-    lcd->drawBitmap(old_area.x1, old_area.y1, oldWidth, oldHeight, (const uint8_t *)px_map);
+    lcd->drawBitmap(old_area.x1, old_area.y1, oldWidth, oldHeight, (const uint8_t *) px_map);
 #endif
 
     // For RGB LCD, directly notify LVGL that the buffer is ready
@@ -203,15 +186,14 @@ void flush_callback(lv_display_t *drv, const lv_area_t *area, uint8_t *px_map)
 }
 #endif /* LVGL_PORT_AVOID_TEAR */
 
-static lv_display_t *display_init(LCD *lcd)
-{
+static lv_display_t *display_init(LCD *lcd) {
     ESP_UTILS_CHECK_FALSE_RETURN(lcd != nullptr, nullptr, "Invalid LCD device");
     ESP_UTILS_CHECK_FALSE_RETURN(lcd->getRefreshPanelHandle() != nullptr, nullptr, "LCD device is not initialized");
 
-    static lv_display_t * disp;
+    static lv_display_t *disp;
 
     // Alloc draw buffers used by LVGL
-    auto lcd_width = lcd->getFrameWidth();
+    auto lcd_width  = lcd->getFrameWidth();
     auto lcd_height = lcd->getFrameHeight();
     int buffer_size = 0;
 
@@ -226,19 +208,22 @@ static lv_display_t *display_init(LCD *lcd)
     for (int i = 0; (i < LVGL_PORT_BUFFER_NUM) && (i < LVGL_PORT_BUFFER_NUM_MAX); i++) {
         lvgl_buf[i] = heap_caps_malloc(PX_SIZE(buffer_size), LVGL_PORT_BUFFER_MALLOC_CAPS);
         assert(lvgl_buf[i]);
-        ESP_UTILS_LOGD("Buffer[%d] address: %p -> %p, size: %d", i, lvgl_buf[i], lvgl_buf[i] + PX_SIZE(buffer_size), PX_SIZE(buffer_size));
-    }    
+        ESP_UTILS_LOGD("Buffer[%d] address: %p -> %p, size: %d", i, lvgl_buf[i], lvgl_buf[i] + PX_SIZE(buffer_size),
+                       PX_SIZE(buffer_size));
+    }
 #else
-    // To avoid the tearing effect, we should use at least two frame buffers: one for LVGL rendering and another for LCD refresh
+    // To avoid the tearing effect, we should use at least two frame buffers:
+    // one for LVGL rendering and another for LCD refresh
     buffer_size = lcd_width * lcd_height;
 #if (LVGL_PORT_DISP_BUFFER_NUM >= 3) && (LVGL_PORT_ROTATION_DEGREE == 0) && LVGL_PORT_FULL_REFRESH
 
-    // With the usage of three buffers and full-refresh, we always have one buffer available for rendering,
-    // eliminating the need to wait for the LCD's sync signal
-    lvgl_port_lcd_last_buf = lcd->getFrameBufferByIndex(0);
-    lvgl_buf[0] = lcd->getFrameBufferByIndex(1);
-    lvgl_buf[1] = lcd->getFrameBufferByIndex(2);
-    lvgl_port_lcd_next_buf = lvgl_port_lcd_last_buf;
+    // With the usage of three buffers and full-refresh, we always have one
+    // buffer available for rendering, eliminating the need to wait for the
+    // LCD's sync signal
+    lvgl_port_lcd_last_buf   = lcd->getFrameBufferByIndex(0);
+    lvgl_buf[0]              = lcd->getFrameBufferByIndex(1);
+    lvgl_buf[1]              = lcd->getFrameBufferByIndex(2);
+    lvgl_port_lcd_next_buf   = lvgl_port_lcd_last_buf;
     lvgl_port_flush_next_buf = lvgl_buf[1];
 
 #elif (LVGL_PORT_DISP_BUFFER_NUM >= 3) && (LVGL_PORT_ROTATION_DEGREE != 0)
@@ -256,9 +241,10 @@ static lv_display_t *display_init(LCD *lcd)
 
     disp = lv_display_create(lcd_width, lcd_height);
     lv_display_set_flush_cb(disp, flush_callback);
-    lv_display_set_driver_data(disp, (void *)lcd);
+    lv_display_set_driver_data(disp, (void *) lcd);
 #if (LVGL_PORT_BUFFER_MALLOC_CAPS == MALLOC_CAP_SPIRAM)
-    lv_display_set_buffers(disp, lvgl_buf[0], lvgl_buf[1], buffer_size * sizeof(lv_color_t), LV_DISPLAY_RENDER_MODE_DIRECT);
+    lv_display_set_buffers(disp, lvgl_buf[0], lvgl_buf[1], buffer_size * sizeof(lv_color_t),
+                           LV_DISPLAY_RENDER_MODE_DIRECT);
 #else
     ESP_UTILS_LOGD("Buffer[%d] address: %p -> %p, size: %d", internalFb, internalFb + PX_SIZE(lcd_width * lcd_height));
     lv_display_set_buffers(disp, lvgl_buf[0], NULL, PX_SIZE(buffer_size), LV_DISPLAY_RENDER_MODE_PARTIAL);
@@ -271,8 +257,7 @@ static lv_display_t *display_init(LCD *lcd)
     return disp;
 }
 
-static void touchpad_read(lv_indev_t *indev_drv, lv_indev_data_t *data)
-{
+static void touchpad_read(lv_indev_t *indev_drv, lv_indev_data_t *data) {
     Touch *tp = (Touch *) lv_indev_get_driver_data(indev_drv);
     TouchPoint point;
 
@@ -281,67 +266,52 @@ static void touchpad_read(lv_indev_t *indev_drv, lv_indev_data_t *data)
     if (read_touch_result > 0) {
         data->point.x = point.x;
         data->point.y = point.y;
-        data->state = LV_INDEV_STATE_PRESSED;
+        data->state   = LV_INDEV_STATE_PRESSED;
     } else {
         data->state = LV_INDEV_STATE_RELEASED;
     }
 }
 
-static lv_indev_t *indev_init(Touch *tp)
-{
+static lv_indev_t *indev_init(Touch *tp) {
     ESP_UTILS_CHECK_FALSE_RETURN(tp != nullptr, nullptr, "Invalid touch device");
     ESP_UTILS_CHECK_FALSE_RETURN(tp->getPanelHandle() != nullptr, nullptr, "Touch device is not initialized");
 
-    static lv_indev_t* indev_drv_tp;
+    static lv_indev_t *indev_drv_tp;
 
     ESP_UTILS_LOGD("Register input driver to LVGL");
     indev_drv_tp = lv_indev_create();
     lv_indev_set_type(indev_drv_tp, LV_INDEV_TYPE_POINTER);
     lv_indev_set_read_cb(indev_drv_tp, touchpad_read);
-    lv_indev_set_driver_data(indev_drv_tp, (void *)tp);
+    lv_indev_set_driver_data(indev_drv_tp, (void *) tp);
 
     return indev_drv_tp;
 }
 
 #if !LV_TICK_CUSTOM
-static void tick_increment(void *arg)
-{
+static void tick_increment(void *arg) {
     /* Tell LVGL how many milliseconds have elapsed */
     lv_tick_inc(LVGL_PORT_TICK_PERIOD_MS);
 }
 
-static bool tick_init(void)
-{
+static bool tick_init(void) {
     // Tick interface for LVGL (using esp_timer to generate 2ms periodic event)
-    const esp_timer_create_args_t lvgl_tick_timer_args = {
-        .callback = &tick_increment,
-        .name = "LVGL tick"
-    };
-    ESP_UTILS_CHECK_ERROR_RETURN(
-        esp_timer_create(&lvgl_tick_timer_args, &lvgl_tick_timer), false, "Create LVGL tick timer failed"
-    );
-    ESP_UTILS_CHECK_ERROR_RETURN(
-        esp_timer_start_periodic(lvgl_tick_timer, LVGL_PORT_TICK_PERIOD_MS * 1000), false,
-        "Start LVGL tick timer failed"
-    );
+    const esp_timer_create_args_t lvgl_tick_timer_args = {.callback = &tick_increment, .name = "LVGL tick"};
+    ESP_UTILS_CHECK_ERROR_RETURN(esp_timer_create(&lvgl_tick_timer_args, &lvgl_tick_timer), false,
+                                 "Create LVGL tick timer failed");
+    ESP_UTILS_CHECK_ERROR_RETURN(esp_timer_start_periodic(lvgl_tick_timer, LVGL_PORT_TICK_PERIOD_MS * 1000), false,
+                                 "Start LVGL tick timer failed");
 
     return true;
 }
 
-static bool tick_deinit(void)
-{
-    ESP_UTILS_CHECK_ERROR_RETURN(
-        esp_timer_stop(lvgl_tick_timer), false, "Stop LVGL tick timer failed"
-    );
-    ESP_UTILS_CHECK_ERROR_RETURN(
-        esp_timer_delete(lvgl_tick_timer), false, "Delete LVGL tick timer failed"
-    );
+static bool tick_deinit(void) {
+    ESP_UTILS_CHECK_ERROR_RETURN(esp_timer_stop(lvgl_tick_timer), false, "Stop LVGL tick timer failed");
+    ESP_UTILS_CHECK_ERROR_RETURN(esp_timer_delete(lvgl_tick_timer), false, "Delete LVGL tick timer failed");
     return true;
 }
 #endif
 
-static void lvgl_port_task(void *arg)
-{
+static void lvgl_port_task(void *arg) {
     ESP_UTILS_LOGI("Starting LVGL task");
 
     uint32_t task_delay_ms = LVGL_PORT_TASK_MAX_DELAY_MS;
@@ -359,32 +329,27 @@ static void lvgl_port_task(void *arg)
     }
 }
 
-IRAM_ATTR bool onDrawBitmapFinishCallback(void *user_data)
-{
-    lv_display_t *disp = (lv_display_t *)user_data;
+IRAM_ATTR bool onDrawBitmapFinishCallback(void *user_data) {
+    lv_display_t *disp = (lv_display_t *) user_data;
 
     lv_display_flush_ready(disp);
 
     return false;
 }
 
-bool lvgl_port_init(LCD *lcd, Touch *tp, lv_display_t **out_disp)
-{
+bool lvgl_port_init(LCD *lcd, Touch *tp, lv_display_t **out_disp) {
     ESP_UTILS_CHECK_FALSE_RETURN(lcd != nullptr, false, "Invalid LCD device");
 
     auto bus_type = lcd->getBus()->getBasicAttributes().type;
 #if LVGL_PORT_AVOID_TEAR
-    ESP_UTILS_CHECK_FALSE_RETURN(
-        (bus_type == ESP_PANEL_BUS_TYPE_RGB) || (bus_type == ESP_PANEL_BUS_TYPE_MIPI_DSI), false,
-        "Avoid tearing function only works with RGB/MIPI-DSI LCD now"
-    );
-    ESP_UTILS_LOGI(
-        "Avoid tearing is enabled, mode: %d, rotation: %d", LVGL_PORT_AVOID_TEARING_MODE, LVGL_PORT_ROTATION_DEGREE
-    );
+    ESP_UTILS_CHECK_FALSE_RETURN((bus_type == ESP_PANEL_BUS_TYPE_RGB) || (bus_type == ESP_PANEL_BUS_TYPE_MIPI_DSI),
+                                 false, "Avoid tearing function only works with RGB/MIPI-DSI LCD now");
+    ESP_UTILS_LOGI("Avoid tearing is enabled, mode: %d, rotation: %d", LVGL_PORT_AVOID_TEARING_MODE,
+                   LVGL_PORT_ROTATION_DEGREE);
 #endif
 
     lv_display_t *disp = nullptr;
-    lv_indev_t *indev = nullptr;
+    lv_indev_t *indev  = nullptr;
 
     lv_init();
 #if !LV_TICK_CUSTOM
@@ -397,7 +362,8 @@ bool lvgl_port_init(LCD *lcd, Touch *tp, lv_display_t **out_disp)
     // Record the initial rotation of the display
     lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_0);
 
-    // For non-RGB LCD, need to notify LVGL that the buffer is ready when the refresh is finished
+    // For non-RGB LCD, need to notify LVGL that the buffer is ready when the
+    // refresh is finished
     if (bus_type != ESP_PANEL_BUS_TYPE_RGB) {
         ESP_UTILS_LOGD("Attach refresh finish callback to LCD");
         lcd->attachDrawBitmapFinishCallback(onDrawBitmapFinishCallback, (void *) disp);
@@ -415,28 +381,26 @@ bool lvgl_port_init(LCD *lcd, Touch *tp, lv_display_t **out_disp)
 
     ESP_UTILS_LOGI("Create LVGL task");
     BaseType_t core_id = (LVGL_PORT_TASK_CORE < 0) ? tskNO_AFFINITY : LVGL_PORT_TASK_CORE;
-    BaseType_t ret = xTaskCreatePinnedToCore(lvgl_port_task, "lvgl", LVGL_PORT_TASK_STACK_SIZE, NULL,
-                     LVGL_PORT_TASK_PRIORITY, &lvgl_task_handle, core_id);
+    BaseType_t ret     = xTaskCreatePinnedToCore(lvgl_port_task, "lvgl", LVGL_PORT_TASK_STACK_SIZE, NULL,
+                                                 LVGL_PORT_TASK_PRIORITY, &lvgl_task_handle, core_id);
     ESP_UTILS_CHECK_FALSE_RETURN(ret == pdPASS, false, "Create LVGL task failed");
 
 #if LVGL_PORT_AVOID_TEAR
-    lcd->attachRefreshFinishCallback(onLcdVsyncCallback, (void *)lvgl_task_handle);
+    lcd->attachRefreshFinishCallback(onLcdVsyncCallback, (void *) lvgl_task_handle);
 #endif
 
     *out_disp = disp;
     return true;
 }
 
-bool lvgl_port_lock(int timeout_ms)
-{
+bool lvgl_port_lock(int timeout_ms) {
     ESP_UTILS_CHECK_NULL_RETURN(lvgl_mux, false, "LVGL mutex is not initialized");
 
     const TickType_t timeout_ticks = (timeout_ms < 0) ? portMAX_DELAY : pdMS_TO_TICKS(timeout_ms);
     return (xSemaphoreTakeRecursive(lvgl_mux, timeout_ticks) == pdTRUE);
 }
 
-bool lvgl_port_unlock(void)
-{
+bool lvgl_port_unlock(void) {
     ESP_UTILS_CHECK_NULL_RETURN(lvgl_mux, false, "LVGL mutex is not initialized");
 
     xSemaphoreGiveRecursive(lvgl_mux);
@@ -444,8 +408,7 @@ bool lvgl_port_unlock(void)
     return true;
 }
 
-bool lvgl_port_deinit(void)
-{
+bool lvgl_port_deinit(void) {
 #if !LV_TICK_CUSTOM
     ESP_UTILS_CHECK_FALSE_RETURN(tick_deinit(), false, "Deinitialize LVGL tick failed");
 #endif

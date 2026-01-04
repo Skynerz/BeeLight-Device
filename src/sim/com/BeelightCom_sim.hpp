@@ -2,27 +2,25 @@
 #define BEELIGHTCOM_SIM_HPP
 
 #include <lvgl.h>
+
 #include <functional>
 #include <map>
 #if __WIN32__
 #define WIN32_LEAN_AND_MEAN
-#include <winsock2.h>
 #include <windows.h>
+#include <winsock2.h>
 #else
-#include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
 #endif
-#include "com/BeelightCom.hpp"
 #include "Frame.hpp"
+#include "com/BeelightCom.hpp"
 
-class BeelightCom_sim : public BeelightCom
-{
-public:
-    static BeelightCom_sim *instance()
-    {
+class BeelightCom_sim : public BeelightCom {
+   public:
+    static BeelightCom_sim *instance() {
         static BeelightCom_sim *instance = nullptr;
-        if (instance == nullptr)
-        {
+        if (instance == nullptr) {
             instance = new BeelightCom_sim();
         }
         return instance;
@@ -43,8 +41,8 @@ public:
         return simulationEnabled_m;
     }
     void simulationStep();
-    
-private:
+
+   private:
     void processPacket(const CmdFrame &pkt, int peerFd);
     void initReadCommand();
     void processReadCommand(const CmdFrame &inPkt, CmdFrame &outPkt);
@@ -67,6 +65,5 @@ private:
 };
 
 void step(lv_timer_t *timer);
-
 
 #endif

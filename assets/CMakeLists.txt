@@ -8,7 +8,7 @@ set_target_properties(png2lvimgdsc PROPERTIES
 )
 
 if(WIN32)
-    add_custom_command(TARGET png2lvimgdsc 
+    add_custom_command(TARGET png2lvimgdsc
                     POST_BUILD
                     COMMAND cmd /C ${CMAKE_CURRENT_SOURCE_DIR}/generate.bat)
 endif()

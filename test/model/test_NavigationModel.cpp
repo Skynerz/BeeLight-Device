@@ -7,19 +7,17 @@ extern uint8_t registerEventCalledCount;
 extern uint8_t emitCalledCount;
 extern uint8_t connectCalledCount;
 
-TEST(NavigationModel, instance)
-{
+TEST(NavigationModel, instance) {
     NavigationModel *model = NavigationModel::instance();
     EXPECT_TRUE(model != nullptr);
     NavigationModel *model2 = NavigationModel::instance();
     EXPECT_EQ(model2, model);
 }
 
-TEST(NavigationModel, constructor)
-{
+TEST(NavigationModel, constructor) {
     registerEventCalledCount = 0;
-    emitCalledCount = 0;
-    connectCalledCount = 0;
+    emitCalledCount          = 0;
+    connectCalledCount       = 0;
     NavigationModel model;
     EXPECT_EQ(model.currentTime_m, UNDEFINED);
     EXPECT_EQ(model.estTimeBeforeArrival_m, UNDEFINED);
@@ -34,11 +32,10 @@ TEST(NavigationModel, constructor)
     EXPECT_EQ(connectCalledCount, 0);
 }
 
-TEST(NavigationModel, reset)
-{
+TEST(NavigationModel, reset) {
     registerEventCalledCount = 0;
-    emitCalledCount = 0;
-    connectCalledCount = 0;
+    emitCalledCount          = 0;
+    connectCalledCount       = 0;
     NavigationModel model;
     model.setCurrentTime("plop");
     model.setEstTimeBeforeArrival("plop");
@@ -59,11 +56,10 @@ TEST(NavigationModel, reset)
     EXPECT_EQ(model.nextInstructionIcon_m, InstructionIcon::UNKNOWN);
 }
 
-TEST(NavigationModel, CurrentTime)
-{
+TEST(NavigationModel, CurrentTime) {
     NavigationModel model;
-    emitCalledCount = 0;
-    std::string time = "plop";
+    emitCalledCount   = 0;
+    std::string time  = "plop";
     std::string time2 = "plop2";
     model.setCurrentTime(time);
     EXPECT_EQ(model.getCurrentTime(), time);
@@ -76,11 +72,10 @@ TEST(NavigationModel, CurrentTime)
     EXPECT_EQ(emitCalledCount, 2);
 }
 
-TEST(NavigationModel, EstTimeBeforeArrival)
-{
+TEST(NavigationModel, EstTimeBeforeArrival) {
     NavigationModel model;
-    emitCalledCount = 0;
-    std::string time = "plop";
+    emitCalledCount   = 0;
+    std::string time  = "plop";
     std::string time2 = "plop2";
     model.setEstTimeBeforeArrival(time);
     EXPECT_EQ(model.getEstTimeBeforeArrival(), time);
@@ -93,11 +88,10 @@ TEST(NavigationModel, EstTimeBeforeArrival)
     EXPECT_EQ(emitCalledCount, 2);
 }
 
-TEST(NavigationModel, EstDistanceBeforeArrival)
-{
+TEST(NavigationModel, EstDistanceBeforeArrival) {
     NavigationModel model;
-    emitCalledCount = 0;
-    std::string distance = "plop";
+    emitCalledCount       = 0;
+    std::string distance  = "plop";
     std::string distance2 = "plop2";
     model.setEstDistanceBeforeArrival(distance);
     EXPECT_EQ(model.getEstDistanceBeforeArrival(), distance);
@@ -110,11 +104,10 @@ TEST(NavigationModel, EstDistanceBeforeArrival)
     EXPECT_EQ(emitCalledCount, 2);
 }
 
-TEST(NavigationModel, ArrivingTime)
-{
+TEST(NavigationModel, ArrivingTime) {
     NavigationModel model;
-    emitCalledCount = 0;
-    std::string time = "plop";
+    emitCalledCount   = 0;
+    std::string time  = "plop";
     std::string time2 = "plop2";
     model.setArrivingTime(time);
     EXPECT_EQ(model.getArrivingTime(), time);
@@ -127,11 +120,10 @@ TEST(NavigationModel, ArrivingTime)
     EXPECT_EQ(emitCalledCount, 2);
 }
 
-TEST(NavigationModel, NextInstruction)
-{
+TEST(NavigationModel, NextInstruction) {
     NavigationModel model;
-    emitCalledCount = 0;
-    std::string instruction = "plop";
+    emitCalledCount          = 0;
+    std::string instruction  = "plop";
     std::string instruction2 = "plop2";
     model.setNextInstruction(instruction);
     EXPECT_EQ(model.getNextInstruction(), instruction);
@@ -144,11 +136,10 @@ TEST(NavigationModel, NextInstruction)
     EXPECT_EQ(emitCalledCount, 2);
 }
 
-TEST(NavigationModel, RemainingDistanceBeforeNextInstruction)
-{
+TEST(NavigationModel, RemainingDistanceBeforeNextInstruction) {
     NavigationModel model;
-    emitCalledCount = 0;
-    std::string distance = "plop";
+    emitCalledCount       = 0;
+    std::string distance  = "plop";
     std::string distance2 = "plop2";
     model.setRemainingDistanceBeforeNextInstruction(distance);
     EXPECT_EQ(model.getRemainingDistanceBeforeNextInstruction(), distance);
@@ -161,11 +152,10 @@ TEST(NavigationModel, RemainingDistanceBeforeNextInstruction)
     EXPECT_EQ(emitCalledCount, 2);
 }
 
-TEST(NavigationModel, NextInstructionIcon)
-{
+TEST(NavigationModel, NextInstructionIcon) {
     NavigationModel model;
-    emitCalledCount = 0;
-    InstructionIcon::Values instruction = InstructionIcon::Values::DEPART;
+    emitCalledCount                      = 0;
+    InstructionIcon::Values instruction  = InstructionIcon::Values::DEPART;
     InstructionIcon::Values instruction2 = InstructionIcon::Values::DESTINATION;
     model.setNextInstructionIcon(instruction);
     EXPECT_EQ(model.getNextInstructionIcon(), instruction);

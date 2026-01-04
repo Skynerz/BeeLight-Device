@@ -2,14 +2,13 @@
 #define NAVIGATION_MODEL_HPP
 
 #include <string>
+
 #include "Event.hpp"
 #include "InstructionIcon.hpp"
 
-class NavigationModel
-{
-public:
-    enum NavigationEvents : uint8_t
-    {
+class NavigationModel {
+   public:
+    enum NavigationEvents : uint8_t {
         EVENT_CURRENT_TIME_UPDATED = 1,
         EVENT_EST_TIME_ARRIVAL_UPDATED,
         EVENT_EST_DISTANCE_ARRIVAL_UPDATED,
@@ -19,11 +18,9 @@ public:
         EVENT_NEXT_INSTRUCTION_ICON_UPDATED,
     };
 
-    static NavigationModel *instance()
-    {
+    static NavigationModel *instance() {
         static NavigationModel *instance = nullptr;
-        if (instance == nullptr)
-        {
+        if (instance == nullptr) {
             instance = new NavigationModel();
         }
         return instance;
@@ -39,42 +36,35 @@ public:
     void setRemainingDistanceBeforeNextInstruction(const std::string &distance);
     void setNextInstructionIcon(const InstructionIcon::Values icon);
 
-    const std::string &getCurrentTime() const
-    {
+    const std::string &getCurrentTime() const {
         return currentTime_m;
     }
 
-    const std::string &getEstTimeBeforeArrival() const
-    {
+    const std::string &getEstTimeBeforeArrival() const {
         return estTimeBeforeArrival_m;
     }
 
-    const std::string &getEstDistanceBeforeArrival() const
-    {
+    const std::string &getEstDistanceBeforeArrival() const {
         return estDistanceBeforeArrival_m;
     }
 
-    const std::string &getArrivingTime() const
-    {
+    const std::string &getArrivingTime() const {
         return arrivingTime_m;
     }
 
-    const std::string &getNextInstruction() const
-    {
+    const std::string &getNextInstruction() const {
         return nextInstruction_m;
     }
 
-    const std::string &getRemainingDistanceBeforeNextInstruction() const
-    {
+    const std::string &getRemainingDistanceBeforeNextInstruction() const {
         return remainingDistanceBeforeNextInstruction_m;
     }
 
-    const InstructionIcon::Values getNextInstructionIcon() const
-    {
+    const InstructionIcon::Values getNextInstructionIcon() const {
         return nextInstructionIcon_m;
     }
 
-private:
+   private:
 #define UNDEFINED std::string("--")
     NavigationModel();
     std::string currentTime_m{UNDEFINED};
@@ -86,4 +76,4 @@ private:
     InstructionIcon::Values nextInstructionIcon_m{InstructionIcon::Values::UNKNOWN};
 };
 
-#endif // NAVIGATION_MODEL_HPP
+#endif  // NAVIGATION_MODEL_HPP
