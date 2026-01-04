@@ -1,0 +1,6 @@
+.clang-format
+build/*
+.pio/*
+.vscode/*
+boards/*
+libs/*

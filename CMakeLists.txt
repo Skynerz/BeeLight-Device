@@ -27,10 +27,10 @@ endif()
 
 if(SIMULATOR)
     message("Simulator BUILD")
-    set(CUSTOM_DEFS 
-        SIMULATOR=1 
+    set(CUSTOM_DEFS
+        SIMULATOR=1
         MEMSIZE_KB=64
-        CONFIG_LV_USE_SYSMON=1 
+        CONFIG_LV_USE_SYSMON=1
         CONFIG_LV_USE_MEM_MONITOR=1
         CONFIG_LV_USE_PERF_MONITOR=1
     )
@@ -47,7 +47,7 @@ if(SIMULATOR)
         list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/libs/sdl2/cmake")
         include(sdl2-config)
         message("Make SDL available done")
-        set(CUSTOM_DEFS ${CUSTOM_DEFS} 
+        set(CUSTOM_DEFS ${CUSTOM_DEFS}
             LV_USE_SDL=1
             LV_USE_OS=LV_OS_SDL2
             DRAW_STACK_SIZE=32768
@@ -55,7 +55,7 @@ if(SIMULATOR)
         )
     else()
         message("X11 BUILD")
-        set(CUSTOM_DEFS ${CUSTOM_DEFS}      
+        set(CUSTOM_DEFS ${CUSTOM_DEFS}
             LV_USE_X11=1
             LV_X11_RENDER_MODE_PARTIAL=1
             LV_USE_OS=LV_OS_NONE

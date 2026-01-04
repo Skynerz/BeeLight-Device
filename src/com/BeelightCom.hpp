@@ -3,16 +3,17 @@
 
 #include "BeeLog.hpp"
 
-class BeelightCom
-{
-public:
+class BeelightCom {
+   public:
     virtual ~BeelightCom() = default;
-    virtual void init() = 0;
-    virtual void uninit() = 0;
+    virtual void init()    = 0;
+    virtual void uninit()  = 0;
 
-    BeeLog *getLogger() { return &log_m; }
+    BeeLog *getLogger() {
+        return &log_m;
+    }
 
-protected:
+   protected:
     BeeLog log_m{"BeelightCom"};
 };
 

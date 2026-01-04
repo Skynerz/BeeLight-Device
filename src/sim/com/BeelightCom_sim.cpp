@@ -1,9 +1,12 @@
 #include "BeelightCom_sim.hpp"
-#include "model/NavigationModel.hpp"
-#include <ctime>
-#include <unistd.h>
+
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
+
+#include <ctime>
+
+#include "model/NavigationModel.hpp"
 #if __WIN32__
 #include <ws2tcpip.h>
 #else
@@ -11,8 +14,7 @@
 #include <poll.h>
 #endif
 
-void BeelightCom_sim::init()
-{
+void BeelightCom_sim::init() {
     logger_m.info("BeelightCom_sim init");
 
     initReadCommand();
@@ -27,20 +29,17 @@ void BeelightCom_sim::init()
     step(timer_m);
 }
 
-void BeelightCom_sim::uninit()
-{
+void BeelightCom_sim::uninit() {
     logger_m.info("BeelightCom_sim uninit");
     lv_timer_delete(timer_m);
     close(socket_m);
 }
 
-void BeelightCom_sim::serverInit()
-{
+void BeelightCom_sim::serverInit() {
 #if __WIN32__
     WSADATA wsaData;
     int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (iResult != 0)
-    {
+    if (iResult != 0) {
         logger_m.error("WSAStartup failed with error: " + iResult);
         return;
     }
@@ -48,33 +47,29 @@ void BeelightCom_sim::serverInit()
     struct addrinfo hints;
     struct addrinfo *serverAddress_m = nullptr;
     ZeroMemory(&hints, sizeof(hints));
-    hints.ai_family = AF_INET;
+    hints.ai_family   = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
 
     // Resolve the server address and port
     iResult = getaddrinfo(INET_ADDR, "7979", &hints, &serverAddress_m);
-    if (iResult != 0)
-    {
+    if (iResult != 0) {
         logger_m.error("getaddrinfo failed with error: " + iResult);
         WSACleanup();
         return;
     }
 
     // Create a SOCKET for connecting to server
-    socket_m = socket(serverAddress_m->ai_family, serverAddress_m->ai_socktype,
-                      serverAddress_m->ai_protocol);
-    if (socket_m == INVALID_SOCKET)
-    {
+    socket_m = socket(serverAddress_m->ai_family, serverAddress_m->ai_socktype, serverAddress_m->ai_protocol);
+    if (socket_m == INVALID_SOCKET) {
         logger_m.error("socket failed with error: " + WSAGetLastError());
         WSACleanup();
         return;
     }
 
     // Setup the TCP listening socket
-    iResult = bind(socket_m, serverAddress_m->ai_addr, (int)serverAddress_m->ai_addrlen);
-    if (iResult == SOCKET_ERROR)
-    {
+    iResult = bind(socket_m, serverAddress_m->ai_addr, (int) serverAddress_m->ai_addrlen);
+    if (iResult == SOCKET_ERROR) {
         logger_m.error("bind failed with error: " + WSAGetLastError());
         freeaddrinfo(serverAddress_m);
         closesocket(socket_m);
@@ -85,8 +80,7 @@ void BeelightCom_sim::serverInit()
     freeaddrinfo(serverAddress_m);
 
     iResult = listen(socket_m, SOMAXCONN);
-    if (iResult == SOCKET_ERROR)
-    {
+    if (iResult == SOCKET_ERROR) {
         logger_m.error("listen failed with error: %d" + WSAGetLastError());
         closesocket(socket_m);
         WSACleanup();
@@ -95,37 +89,31 @@ void BeelightCom_sim::serverInit()
 #else
     socket_m = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-    serverAddress_m.sin_family = AF_INET;
-    serverAddress_m.sin_port = htons(PORT);
+    serverAddress_m.sin_family      = AF_INET;
+    serverAddress_m.sin_port        = htons(PORT);
     serverAddress_m.sin_addr.s_addr = inet_addr(INET_ADDR);
 
-    if (bind(socket_m, (struct sockaddr *)&serverAddress_m,
-             sizeof(serverAddress_m)))
-    {
+    if (bind(socket_m, (struct sockaddr *) &serverAddress_m, sizeof(serverAddress_m))) {
         logger_m.error("Bind error: " + std::string(strerror(errno)));
     }
 
     int reuse = 1;
-    if (setsockopt(socket_m, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) != 0)
-    {
+    if (setsockopt(socket_m, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) != 0) {
         logger_m.error("SO_REUSEADDR setsockopt error: " + std::string(strerror(errno)));
     }
 
-    if (setsockopt(socket_m, SOL_SOCKET, SO_KEEPALIVE, &reuse, sizeof(reuse)) != 0)
-    {
+    if (setsockopt(socket_m, SOL_SOCKET, SO_KEEPALIVE, &reuse, sizeof(reuse)) != 0) {
         logger_m.error("SO_KEEPALIVE setsockopt error: " + std::string(strerror(errno)));
     }
 
-    if (listen(socket_m, 32) < 0)
-    {
+    if (listen(socket_m, 32) < 0) {
         logger_m.error("listen error: " + std::string(strerror(errno)));
         close(socket_m);
     }
 #endif
 }
 
-void BeelightCom_sim::serverStep()
-{
+void BeelightCom_sim::serverStep() {
 #if !__WIN32__
     CmdFrame pkt;
     struct timeval tv;
@@ -138,28 +126,21 @@ void BeelightCom_sim::serverStep()
     pollFd.events = POLLIN;
     int ret;
 
-    tv.tv_usec = 1000 * 200; // 200ms
-    tv.tv_sec = 0;
+    tv.tv_usec = 1000 * 200;  // 200ms
+    tv.tv_sec  = 0;
 
-    if (!clientConnected)
-    {
+    if (!clientConnected) {
         int recVal = select(socket_m + 1, &rfds, NULL, NULL, &tv);
-        if (recVal == -1)
-        {
+        if (recVal == -1) {
             logger_m.error("select error");
             // Error
             close(peer_m);
             clientConnected = false;
-        }
-        else if (recVal > 0)
-        {
+        } else if (recVal > 0) {
             peer_m = accept(socket_m, NULL, NULL);
-            if (peer_m < 0)
-            {
+            if (peer_m < 0) {
                 logger_m.error("accept error: " + std::string(strerror(errno)));
-            }
-            else
-            {
+            } else {
                 logger_m.info("Client connected !");
                 clientConnected = true;
                 setSimulation(false);
@@ -167,224 +148,183 @@ void BeelightCom_sim::serverStep()
         }
     }
 
-    if (clientConnected)
-    {
+    if (clientConnected) {
         pollFd.fd = peer_m;
-        ret = poll(&pollFd, 1, 100); // 1 second for timeout
-        switch (ret)
-        {
-        case -1:
-            logger_m.error("poll error");
-            clientConnected = false;
-            close(peer_m);
-            break;
-        case 0:
-            // logger_m.debug("poll timeout");
-            break;
-        default:
-        {
-            ssize_t len = recvfrom(peer_m, &pkt, sizeof(CmdFrame), 0, (sockaddr *)&serverAddress_m, (socklen_t *)&sockLen);
-            if (len < 0)
-            {
-                // Failed to read packet
-                logger_m.error("Error reading packet" + len);
-            }
-            else if (len == 0)
-            {
-                logger_m.error("socket closed");
+        ret       = poll(&pollFd, 1, 100);  // 1 second for timeout
+        switch (ret) {
+            case -1:
+                logger_m.error("poll error");
                 clientConnected = false;
-            }
-            else
-            {
-                logger_m.debug("read " + std::to_string(len) + " bytes");
-                processPacket(pkt, peer_m);
-            }
-        }
-        break;
+                close(peer_m);
+                break;
+            case 0:
+                // logger_m.debug("poll timeout");
+                break;
+            default: {
+                ssize_t len =
+                    recvfrom(peer_m, &pkt, sizeof(CmdFrame), 0, (sockaddr *) &serverAddress_m, (socklen_t *) &sockLen);
+                if (len < 0) {
+                    // Failed to read packet
+                    logger_m.error("Error reading packet" + len);
+                } else if (len == 0) {
+                    logger_m.error("socket closed");
+                    clientConnected = false;
+                } else {
+                    logger_m.debug("read " + std::to_string(len) + " bytes");
+                    processPacket(pkt, peer_m);
+                }
+            } break;
         }
     }
 #endif
 }
 
-void BeelightCom_sim::processPacket(const CmdFrame &pkt, int peerFd)
-{
+void BeelightCom_sim::processPacket(const CmdFrame &pkt, int peerFd) {
     CmdFrame response{
-        .type = 0,
-        .cmd = pkt.cmd,
-        .len = 0,
+        .type   = 0,
+        .cmd    = pkt.cmd,
+        .len    = 0,
         .status = 0,
     };
-    if (pkt.type == 1)
-    {
-        switch (pkt.cmd)
-        {
-        case CMD_HELLO:
-            if (strncmp((const char *)&pkt.data, "Hello", pkt.len) == 0)
-            {
-                logger_m.info("Received CMD_HELLO");
-                response.len = 5;
-                response.status = 1;
-                snprintf((char *)&response.data.read.varName, 6, "World");
+    if (pkt.type == 1) {
+        switch (pkt.cmd) {
+            case CMD_HELLO:
+                if (strncmp((const char *) &pkt.data, "Hello", pkt.len) == 0) {
+                    logger_m.info("Received CMD_HELLO");
+                    response.len    = 5;
+                    response.status = 1;
+                    snprintf((char *) &response.data.read.varName, 6, "World");
+                    write(peerFd, &response, response.len + 4);
+                }
+                break;
+            case CMD_CLOSE:
+                logger_m.info("Received CMD_CLOSE");
+                clientConnected = false;
+                close(peerFd);
+                setSimulation(true);
+                break;
+            case CMD_READ:
+                processReadCommand(pkt, response);
                 write(peerFd, &response, response.len + 4);
-            }
-            break;
-        case CMD_CLOSE:
-            logger_m.info("Received CMD_CLOSE");
-            clientConnected = false;
-            close(peerFd);
-            setSimulation(true);
-            break;
-        case CMD_READ:
-            processReadCommand(pkt, response);
-            write(peerFd, &response, response.len + 4);
-            break;
-        case CMD_WRITE:
-            processWriteCommand(pkt, response);
-            write(peerFd, &response, response.len + 4);
-            break;
-        default:
-            logger_m.info("Received unknown command: " + std::to_string(pkt.cmd));
-            break;
+                break;
+            case CMD_WRITE:
+                processWriteCommand(pkt, response);
+                write(peerFd, &response, response.len + 4);
+                break;
+            default:
+                logger_m.info("Received unknown command: " + std::to_string(pkt.cmd));
+                break;
         }
     }
 }
 
-void BeelightCom_sim::initReadCommand()
-{
-    readCb_m["CurrentTime"] = []()
-    {
+void BeelightCom_sim::initReadCommand() {
+    readCb_m["CurrentTime"] = []() {
         return NavigationModel::instance()->getCurrentTime();
     };
-    readCb_m["EstTimeBeforeArrival"] = []()
-    {
+    readCb_m["EstTimeBeforeArrival"] = []() {
         return NavigationModel::instance()->getEstTimeBeforeArrival();
     };
-    readCb_m["EstDistanceBeforeArrival"] = []()
-    {
+    readCb_m["EstDistanceBeforeArrival"] = []() {
         return NavigationModel::instance()->getEstDistanceBeforeArrival();
     };
-    readCb_m["ArrivingTime"] = []()
-    {
+    readCb_m["ArrivingTime"] = []() {
         return NavigationModel::instance()->getArrivingTime();
     };
-    readCb_m["NextInstruction"] = []()
-    {
+    readCb_m["NextInstruction"] = []() {
         return NavigationModel::instance()->getNextInstruction();
     };
-    readCb_m["RemainingDistanceBeforeNextInstruction"] = []()
-    {
+    readCb_m["RemainingDistanceBeforeNextInstruction"] = []() {
         return NavigationModel::instance()->getRemainingDistanceBeforeNextInstruction();
     };
 }
 
-void BeelightCom_sim::processReadCommand(const CmdFrame &inPkt, CmdFrame &outPkt)
-{
+void BeelightCom_sim::processReadCommand(const CmdFrame &inPkt, CmdFrame &outPkt) {
     std::string varName = std::string(inPkt.data.read.varName);
-    if (readCb_m.find(varName) != readCb_m.end())
-    {
+    if (readCb_m.find(varName) != readCb_m.end()) {
         std::string value = readCb_m[varName]();
-        outPkt.status = 1;
-        outPkt.len = value.length();
-        strncpy((char *)outPkt.data.data, value.c_str(), sizeof(outPkt.data.data));
-    }
-    else
-    {
+        outPkt.status     = 1;
+        outPkt.len        = value.length();
+        strncpy((char *) outPkt.data.data, value.c_str(), sizeof(outPkt.data.data));
+    } else {
         logger_m.error("Unknown read variable: " + varName);
-        outPkt.status = 0; // not found
-        outPkt.len = 0;
+        outPkt.status = 0;  // not found
+        outPkt.len    = 0;
     }
 }
 
-void BeelightCom_sim::initWriteCommand()
-{
-    writeCb_m["CurrentTime"] = [this](std::string value)
-    {
+void BeelightCom_sim::initWriteCommand() {
+    writeCb_m["CurrentTime"] = [this](std::string value) {
         logger_m.debug("Setting CurrentTime to " + value);
         NavigationModel::instance()->setCurrentTime(value);
     };
-    writeCb_m["EstTimeBeforeArrival"] = [this](std::string value)
-    {
+    writeCb_m["EstTimeBeforeArrival"] = [this](std::string value) {
         logger_m.debug("Setting EstTimeBeforeArrival to " + value);
         NavigationModel::instance()->setEstTimeBeforeArrival(value);
     };
-    writeCb_m["EstDistanceBeforeArrival"] = [this](std::string value)
-    {
+    writeCb_m["EstDistanceBeforeArrival"] = [this](std::string value) {
         logger_m.debug("Setting EstDistanceBeforeArrival to " + value);
         NavigationModel::instance()->setEstDistanceBeforeArrival(value);
     };
-    writeCb_m["ArrivingTime"] = [this](std::string value)
-    {
+    writeCb_m["ArrivingTime"] = [this](std::string value) {
         logger_m.debug("Setting ArrivingTime to " + value);
         NavigationModel::instance()->setArrivingTime(value);
     };
-    writeCb_m["NextInstruction"] = [this](std::string value)
-    {
+    writeCb_m["NextInstruction"] = [this](std::string value) {
         logger_m.debug("Setting NextInstruction to " + value);
         NavigationModel::instance()->setNextInstruction(value);
     };
-    writeCb_m["RemainingDistanceBeforeNextInstruction"] = [this](std::string value)
-    {
+    writeCb_m["RemainingDistanceBeforeNextInstruction"] = [this](std::string value) {
         logger_m.debug("Setting RemainingDistanceBeforeNextInstruction to " + value);
         NavigationModel::instance()->setRemainingDistanceBeforeNextInstruction(value);
     };
 }
 
-void BeelightCom_sim::processWriteCommand(const CmdFrame &inPkt, CmdFrame &outPkt)
-{
+void BeelightCom_sim::processWriteCommand(const CmdFrame &inPkt, CmdFrame &outPkt) {
     std::string varName = std::string(inPkt.data.write.varName);
-    char c_value[256] = {0};
-    strncpy(c_value, (const char *)inPkt.data.write.data, inPkt.len - sizeof(inPkt.data.write.varName));
+    char c_value[256]   = {0};
+    strncpy(c_value, (const char *) inPkt.data.write.data, inPkt.len - sizeof(inPkt.data.write.varName));
     std::string value = std::string(c_value);
-    if (writeCb_m.find(varName) != writeCb_m.end())
-    {
+    if (writeCb_m.find(varName) != writeCb_m.end()) {
         writeCb_m[varName](value);
         outPkt.status = 1;
-        outPkt.len = 0;
-    }
-    else
-    {
+        outPkt.len    = 0;
+    } else {
         logger_m.error("Unknown write variable: " + varName);
-        outPkt.status = 0; // not found
-        outPkt.len = 0;
+        outPkt.status = 0;  // not found
+        outPkt.len    = 0;
     }
 }
 
-void step(lv_timer_t *timer)
-{
+void step(lv_timer_t *timer) {
     static int dirIndex = 0;
     /*Use the user_data*/
-    BeelightCom_sim *user_data = (BeelightCom_sim *)lv_timer_get_user_data(timer);
-    if (user_data)
-    {
+    BeelightCom_sim *user_data = (BeelightCom_sim *) lv_timer_get_user_data(timer);
+    if (user_data) {
         auto logger = user_data->getLogger();
 
         user_data->serverStep();
 
-        if (user_data->isSimulationEnabled())
-        {
+        if (user_data->isSimulationEnabled()) {
             user_data->simulationStep();
         }
     }
 }
 
-void BeelightCom_sim::simulationStep()
-{
+void BeelightCom_sim::simulationStep() {
     static uint8_t dirIndex;
-    static bool init = true;
+    static bool init               = true;
     const std::string directions[] = {"droite", "gauche", "tout droit", "arrive"};
-    auto model = NavigationModel::instance();
+    auto model                     = NavigationModel::instance();
 
-    if (init)
-    {
+    if (init) {
         model->setNextInstruction(directions[dirIndex]);
         init = false;
-    }
-    else
-    {
+    } else {
         // current time update
-        std::time_t t = std::time(0); // Get the time now
-        std::tm *now = std::localtime(&t);
-        static uint8_t i = 0;
+        std::time_t t           = std::time(0);  // Get the time now
+        std::tm *now            = std::localtime(&t);
+        static uint8_t i        = 0;
         std::string currentTime = std::to_string(now->tm_hour) + ":" + std::to_string(now->tm_min);
         model->setCurrentTime(currentTime);
 
@@ -401,8 +341,7 @@ void BeelightCom_sim::simulationStep()
         static int dni = 500;
         model->setRemainingDistanceBeforeNextInstruction(std::to_string(dni) + " m");
         dni -= 100;
-        if (dni <= 0)
-        {
+        if (dni <= 0) {
             dirIndex = (dirIndex + 1) % 4;
             model->setNextInstruction(directions[dirIndex]);
             dni = 500;

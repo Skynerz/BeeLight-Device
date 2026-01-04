@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Upload application only 
+# Upload application only
 
 if [ "$#" -ne 1 ]; then
     echo "Usage: $0 <firmware.bin>"
@@ -14,4 +14,4 @@ if [ $? -ne 0 ]; then
 fi
 
 #esptool.py --chip auto --port /dev/ttyACM0 --baud 921600 --after hard_reset write_flash 0 $1 TODO
-esptool.py --chip auto --port /dev/ttyACM0 --baud 921600 --after hard_reset write_flash 0x10000 $1 
+esptool.py --chip auto --port /dev/ttyACM0 --baud 921600 --after hard_reset write_flash 0x10000 $1

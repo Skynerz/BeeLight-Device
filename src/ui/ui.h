@@ -10,9 +10,9 @@
 #ifndef SIMULATOR
 #include <Arduino.h>
 #else
-#include <string>
 #include <cstdint>
-using String = std::string; //todo
+#include <string>
+using String = std::string;  // todo
 #endif
 
 /* Exported defines and constants --------------------------------------------*/
