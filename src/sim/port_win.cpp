@@ -1,18 +1,19 @@
 #if __WIN32__
 
-#include "BeelightApp.hpp"
-#include "port.hpp" 
-#include "BeeLog.hpp"
 #include <Windows.h>
+
+#include "BeeLog.hpp"
+#include "BeelightApp.hpp"
+#include "port.hpp"
 
 #define MY_DISP_HOR_RES (int32_t) 360
 #define MY_DISP_VER_RES (int32_t) 360
 
-//TODO ?
+// TODO ?
 #define lvgl_port_lock(x)
 #define lvgl_port_unlock()
 
-static lv_indev_t* mouse_m;
+static lv_indev_t *mouse_m;
 static lv_timer_t *input_timer_m;
 static lv_obj_t *hand_m;
 static lv_display_t *disp = NULL;
@@ -22,14 +23,14 @@ LV_IMAGE_DECLARE(img_hand_cursor);
 void setup() {
     BeeLog::debug("init", "Initializing LVGL");
     lv_init();
-    
+
     disp = lv_sdl_window_create(MY_DISP_HOR_RES, MY_DISP_VER_RES);
     lv_sdl_window_set_resizeable(disp, false);
     lv_sdl_window_set_title(disp, "beelight-simulator");
-    
-    mouse_m = lv_sdl_mouse_create();
+
+    mouse_m       = lv_sdl_mouse_create();
     input_timer_m = lv_timer_create(&input_handler, 50, NULL);
-    
+
     hand_m = lv_image_create(lv_screen_active());
     lv_image_set_src(hand_m, &img_hand_cursor);
 

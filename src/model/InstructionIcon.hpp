@@ -9,8 +9,7 @@
     case x:         \
         return VAR_NAME(x)
 
-struct InstructionIcon
-{
+struct InstructionIcon {
     enum Values : uint8_t
     {
         UNKNOWN = 0,
@@ -79,13 +78,11 @@ struct InstructionIcon
         FERRY_BOAT,
         FERRY_TRAIN,
         NAME_CHANGE,
-        LAST_ICON, // no more after
+        LAST_ICON,  // no more after
     };
 
-    static std::string toString(Values icon)
-    {
-        switch (icon)
-        {
+    static std::string toString(Values icon) {
+        switch (icon) {
             ENUM2STR(UNKNOWN);
             ENUM2STR(DEPART);
             ENUM2STR(DESTINATION);

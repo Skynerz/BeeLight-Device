@@ -1,17 +1,19 @@
 #include <lvgl.h>
 
 #if LV_USE_X11
-#include "BeelightApp.hpp"
-#include "port.hpp" 
-#include "BeeLog.hpp"
-#include "port_x11_custom_flush.hpp"
-#include <unistd.h> //todo windows alt
+#include <unistd.h>  //todo windows alt
+
 #include <csignal>
+
+#include "BeeLog.hpp"
+#include "BeelightApp.hpp"
+#include "port.hpp"
+#include "port_x11_custom_flush.hpp"
 
 #define MY_DISP_HOR_RES (int32_t) 360
 #define MY_DISP_VER_RES (int32_t) 360
 
-//TODO ?
+// TODO ?
 #define lvgl_port_lock(x)
 #define lvgl_port_unlock()
 
@@ -32,13 +34,16 @@ void setup() {
 
     BeelightApp_init();
 
-    //TODO on a jamais l'evenement puisque queue free apres envoi
-    lv_display_add_event_cb(disp, [](lv_event_t * e){
-        if(lv_event_get_code(e) == LV_EVENT_DELETE) {
-            BeeLog::info("BeelightApp", "Delete event received, exiting...");
-            BeelightApp_deinit();
-        }
-    }, LV_EVENT_DELETE, nullptr);
+    // TODO on a jamais l'evenement puisque queue free apres envoi
+    lv_display_add_event_cb(
+        disp,
+        [](lv_event_t *e) {
+            if (lv_event_get_code(e) == LV_EVENT_DELETE) {
+                BeeLog::info("BeelightApp", "Delete event received, exiting...");
+                BeelightApp_deinit();
+            }
+        },
+        LV_EVENT_DELETE, nullptr);
 
     /* Release the mutex */
     lvgl_port_unlock();

@@ -1,10 +1,11 @@
 #include "ui.h"
+
 #include <lvgl.h>
 #include <string.h>
 
+#include "DirectionIconWidget.hpp"
 #include "Event.hpp"
 #include "model/NavigationModel.hpp"
-#include "DirectionIconWidget.hpp"
 #include "port.hpp"
 
 #ifdef SIMULATOR
@@ -25,9 +26,7 @@ static uint8_t *iconCopy = nullptr;
 static lv_style_t curvedLabelStyle;
 static lv_style_t timeStyle;
 
-static void init_styles()
-{
-
+static void init_styles() {
     // Current Time
     lv_style_init(&timeStyle);
     lv_style_set_text_color(&timeStyle, lv_color_hex(0x000000));
@@ -39,39 +38,33 @@ static void init_styles()
     lv_style_set_text_font(&curvedLabelStyle, &lv_font_montserrat_28);
 }
 
-static void updateCurrentTime(lv_event_t *event = nullptr)
-{
+static void updateCurrentTime(lv_event_t *event = nullptr) {
     // lv_event_get_param(event);
     lv_label_set_text(timeLabel, NavigationModel::instance()->getCurrentTime().c_str());
 }
 
-static void updateEta(lv_event_t *event = nullptr)
-{
+static void updateEta(lv_event_t *event = nullptr) {
     lv_arclabel_set_text(etaLabel, NavigationModel::instance()->getEstTimeBeforeArrival().c_str());
 }
 
-static void updateEda(lv_event_t *event = nullptr)
-{
+static void updateEda(lv_event_t *event = nullptr) {
     lv_arclabel_set_text(edaLabel, NavigationModel::instance()->getEstDistanceBeforeArrival().c_str());
 }
 
-static void updateDirection(lv_event_t *event = nullptr)
-{
+static void updateDirection(lv_event_t *event = nullptr) {
     lv_label_set_text(directionLabel, NavigationModel::instance()->getNextInstruction().c_str());
 }
 
-static void updateDirectionDistanceLabel(lv_event_t *event = nullptr)
-{
-    lv_label_set_text(directionDistanceLabel, NavigationModel::instance()->getRemainingDistanceBeforeNextInstruction().c_str());
+static void updateDirectionDistanceLabel(lv_event_t *event = nullptr) {
+    lv_label_set_text(directionDistanceLabel,
+                      NavigationModel::instance()->getRemainingDistanceBeforeNextInstruction().c_str());
 }
 
-static void updateNextInstructionIcon(lv_event_t *event = nullptr)
-{
+static void updateNextInstructionIcon(lv_event_t *event = nullptr) {
     directionIcon.setIcon(NavigationModel::instance()->getNextInstructionIcon());
 }
 
-void ui_init()
-{
+void ui_init() {
     auto navModel = NavigationModel::instance();
     // lv_scr_col lv_scr_act();
 
@@ -85,7 +78,8 @@ void ui_init()
     // Current Time
     timeLabel = lv_label_create(lv_screen_active());
     updateCurrentTime();
-    Event::instance()->connect(timeLabel, NavigationModel::NavigationEvents::EVENT_CURRENT_TIME_UPDATED, &updateCurrentTime);
+    Event::instance()->connect(timeLabel, NavigationModel::NavigationEvents::EVENT_CURRENT_TIME_UPDATED,
+                               &updateCurrentTime);
     lv_obj_align(timeLabel, LV_ALIGN_CENTER, 0, -150);
     lv_obj_add_style(timeLabel, &timeStyle, 0);
 
@@ -94,7 +88,7 @@ void ui_init()
     lv_obj_set_size(etaLabel, getScreenWidth(), getScreenHeight());
     lv_obj_set_style_text_letter_space(etaLabel, 0, LV_PART_MAIN);
     lv_obj_add_style(etaLabel, &curvedLabelStyle, LV_PART_MAIN);
-    lv_arclabel_set_angle_start(etaLabel, 40); // when center => - 180 ????
+    lv_arclabel_set_angle_start(etaLabel, 40);  // when center => - 180 ????
     lv_arclabel_set_radius(etaLabel, LV_PCT(80));
     lv_arclabel_set_recolor(etaLabel, true);
     lv_arclabel_set_text_vertical_align(etaLabel, LV_ARCLABEL_TEXT_ALIGN_CENTER);
@@ -117,14 +111,17 @@ void ui_init()
     lv_arclabel_set_text_horizontal_align(edaLabel, LV_ARCLABEL_TEXT_ALIGN_CENTER);
     lv_obj_center(edaLabel);
     updateEda();
-    Event::instance()->connect(edaLabel, NavigationModel::NavigationEvents::EVENT_EST_DISTANCE_ARRIVAL_UPDATED, &updateEda);
+    Event::instance()->connect(edaLabel, NavigationModel::NavigationEvents::EVENT_EST_DISTANCE_ARRIVAL_UPDATED,
+                               &updateEda);
 
     // Direction Icon
     directionIcon.init();
     directionIcon.setPosition(LV_ALIGN_CENTER, 0, -40);
     directionIcon.setScale(512);
     updateNextInstructionIcon();
-    Event::instance()->connect(directionIcon.getObj(), NavigationModel::NavigationEvents::EVENT_NEXT_INSTRUCTION_ICON_UPDATED, &updateNextInstructionIcon);
+    Event::instance()->connect(directionIcon.getObj(),
+                               NavigationModel::NavigationEvents::EVENT_NEXT_INSTRUCTION_ICON_UPDATED,
+                               &updateNextInstructionIcon);
 
     // Direction label
     directionLabel = lv_label_create(lv_screen_active());
@@ -132,7 +129,8 @@ void ui_init()
     lv_label_set_long_mode(directionLabel, LV_LABEL_LONG_WRAP);
     lv_obj_set_style_text_align(directionLabel, LV_TEXT_ALIGN_CENTER, 0);
     updateDirection();
-    Event::instance()->connect(directionLabel, NavigationModel::NavigationEvents::EVENT_NEXT_INSTRUCTION_UPDATED, &updateDirection);
+    Event::instance()->connect(directionLabel, NavigationModel::NavigationEvents::EVENT_NEXT_INSTRUCTION_UPDATED,
+                               &updateDirection);
     lv_obj_set_style_text_font(directionLabel, &lv_font_montserrat_26, 0);
     lv_obj_align(directionLabel, LV_ALIGN_CENTER, 0, 70);
 
@@ -140,7 +138,9 @@ void ui_init()
     directionDistanceLabel = lv_label_create(lv_screen_active());
     lv_obj_set_style_text_align(directionDistanceLabel, LV_TEXT_ALIGN_CENTER, 0);
     updateDirectionDistanceLabel();
-    Event::instance()->connect(directionDistanceLabel, NavigationModel::NavigationEvents::EVENT_REMAINING_DISTANCE_UPDATED, &updateDirectionDistanceLabel);
+    Event::instance()->connect(directionDistanceLabel,
+                               NavigationModel::NavigationEvents::EVENT_REMAINING_DISTANCE_UPDATED,
+                               &updateDirectionDistanceLabel);
     lv_obj_set_style_text_font(directionDistanceLabel, &lv_font_montserrat_30, 0);
     lv_obj_align(directionDistanceLabel, LV_ALIGN_CENTER, 0, 150);
 
@@ -152,7 +152,8 @@ void ui_init()
     lv_obj_align(connectionStateLabel, LV_ALIGN_LEFT_MID, 10, 0);
 }
 
-// void copy_and_invert_colors_rgba(uint8_t* bufIn, uint8_t* bufOut, uint32_t px_cnt) {
+// void copy_and_invert_colors_rgba(uint8_t* bufIn, uint8_t* bufOut, uint32_t
+// px_cnt) {
 //     for(uint32_t i = 0; i < px_cnt; i++) {
 //         bufOut[4*i + 0] = 255 - bufIn[4*i + 0]; // R
 //         bufOut[4*i + 1] = 255 - bufIn[4*i + 1]; // G
@@ -160,9 +161,7 @@ void ui_init()
 //     }
 // }
 
-void setDirectionIcon(const uint8_t *iconData, size_t iconSize)
-{
-
+void setDirectionIcon(const uint8_t *iconData, size_t iconSize) {
     // Libérer l'ancien buffer si existant
     delete[] iconCopy;
 
@@ -180,19 +179,22 @@ void setDirectionIcon(const uint8_t *iconData, size_t iconSize)
     // directionIconPng.data_size = iconSize;
     // directionIconPng.data = iconCopy;
 
-    // DEBUG ----------------------------------------------------------------------
-    // Serial.printf("Icon updated, size: %u bytes\n", directionIconPng.data_size);
-    // for(uint16_t i = 0; i < directionIconPng.data_size; i++) {
+    // DEBUG
+    // ----------------------------------------------------------------------
+    // Serial.printf("Icon updated, size: %u bytes\n",
+    // directionIconPng.data_size); for(uint16_t i = 0; i <
+    // directionIconPng.data_size; i++) {
     //     Serial.printf("%02X ", iconCopy[i]);
     // }
-    // DEBUG ----------------------------------------------------------------------
+    // DEBUG
+    // ----------------------------------------------------------------------
 
     // Mise à jour dans le contexte LVGL
     // lv_async_call([](void *)
-    //               { lv_img_set_src(directionIcon, &directionIconPng); }, nullptr);
+    //               { lv_img_set_src(directionIcon, &directionIconPng); },
+    //               nullptr);
 }
 
-void setConnected(const bool connected)
-{
+void setConnected(const bool connected) {
     lv_label_set_text(connectionStateLabel, connected ? "Conn." : "Disc.");
 }
