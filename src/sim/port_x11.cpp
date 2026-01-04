@@ -32,7 +32,7 @@ void setup() {
     /* Lock the mutex due to the LVGL APIs are not thread-safe */
     lvgl_port_lock(-1);
 
-    BeelightApp_init();
+    (void) BeelightApp::instance();
 
     // TODO on a jamais l'evenement puisque queue free apres envoi
     lv_display_add_event_cb(
@@ -40,7 +40,6 @@ void setup() {
         [](lv_event_t *e) {
             if (lv_event_get_code(e) == LV_EVENT_DELETE) {
                 BeeLog::info("BeelightApp", "Delete event received, exiting...");
-                BeelightApp_deinit();
             }
         },
         LV_EVENT_DELETE, nullptr);

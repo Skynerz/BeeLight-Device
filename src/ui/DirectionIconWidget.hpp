@@ -3,13 +3,12 @@
 
 #include <map>
 
-#include "model/NavigationModel.hpp"
+#include "model/InstructionIcon.hpp"
 #include "res/icons.h"
 
 class DirectionIconWidget {
    public:
-    DirectionIconWidget() = default;
-    void init();
+    explicit DirectionIconWidget(lv_obj_t *parent);
 
     /**
      * @brief set icon position

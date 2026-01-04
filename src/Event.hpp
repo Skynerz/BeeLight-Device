@@ -3,6 +3,7 @@
 
 #include <lvgl.h>
 
+#include <cstdint>
 #include <map>
 
 class Event {
@@ -21,6 +22,7 @@ class Event {
     void registerEvent(uint8_t eventId);
     void emit(uint8_t eventId, void *data = nullptr);
     void connect(lv_obj_t *obj, uint8_t eventId, lv_event_cb_t cb, void *data = nullptr);
+    void disconnect(lv_obj_t *obj, uint8_t eventId, lv_event_cb_t cb);
 
    private:
     // internal id to LVGL event

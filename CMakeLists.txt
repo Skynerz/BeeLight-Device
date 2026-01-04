@@ -7,11 +7,11 @@ project(${PROJECT_NAME})
 
 option(SIMULATOR "APPLICATION SIMULATOR BUILD" On)
 option(COM_SIMULATOR "COM SIMULATOR BUILD" Off)
-option(BUILD_TESTING "Build unit-tests" Off)
+option(BUILD_TESTING "Build unit-tests" On)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O0 -g")
-set(CMAKE_C_FLAGS "-O0 -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O0 -g -pedantic")
+set(CMAKE_C_FLAGS "-O0 -g -pedantic")
 
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 
@@ -29,7 +29,7 @@ if(SIMULATOR)
     message("Simulator BUILD")
     set(CUSTOM_DEFS
         SIMULATOR=1
-        MEMSIZE_KB=64
+        MEMSIZE_KB=96
         CONFIG_LV_USE_SYSMON=1
         CONFIG_LV_USE_MEM_MONITOR=1
         CONFIG_LV_USE_PERF_MONITOR=1

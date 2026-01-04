@@ -6,6 +6,7 @@
 
 // STUBS
 static uint8_t stub_send          = 0;
+static uint8_t stub_remove        = 0;
 static uint32_t event_last_id     = 0;
 static lv_event_code_t stub_event = LV_EVENT_ALL;
 static void* stub_param           = nullptr;
@@ -30,6 +31,12 @@ lv_event_dsc_t* lv_obj_add_event_cb(lv_obj_t* obj, lv_event_cb_t event_cb, lv_ev
     stub_event     = filter;
     stub_user_data = user_data;
     return nullptr;
+}
+
+uint32_t lv_obj_remove_event_cb(lv_obj_t* obj, lv_event_cb_t event_cb) {
+    stub_remove++;
+    stub_event_cb = event_cb;
+    return LV_RESULT_OK;
 }
 
 // END STUBS

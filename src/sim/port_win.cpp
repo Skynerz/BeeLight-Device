@@ -38,7 +38,7 @@ void setup() {
     /* Lock the mutex due to the LVGL APIs are not thread-safe */
     lvgl_port_lock(-1);
 
-    BeelightApp_init();
+    BeelightApp::instance();
 
     /* Release the mutex */
     lvgl_port_unlock();

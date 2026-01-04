@@ -246,7 +246,6 @@ static lv_display_t *display_init(LCD *lcd) {
     lv_display_set_buffers(disp, lvgl_buf[0], lvgl_buf[1], buffer_size * sizeof(lv_color_t),
                            LV_DISPLAY_RENDER_MODE_DIRECT);
 #else
-    ESP_UTILS_LOGD("Buffer[%d] address: %p -> %p, size: %d", internalFb, internalFb + PX_SIZE(lcd_width * lcd_height));
     lv_display_set_buffers(disp, lvgl_buf[0], NULL, PX_SIZE(buffer_size), LV_DISPLAY_RENDER_MODE_PARTIAL);
     lv_display_set_flush_cb(disp, fb_flush_callback);
     fb_flush_init(lvgl_buf[1], PX_SIZE(buffer_size), flush_callback,
