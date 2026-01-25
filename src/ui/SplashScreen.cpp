@@ -1,7 +1,7 @@
 #include "SplashScreen.hpp"
 
 #include "ScreenNavigation.hpp"
-#include "ui/ui.h"
+#include "ui/Dashboard.hpp"
 
 void SplashScreen::populate() {
     top_label_m = lv_label_create(obj());
