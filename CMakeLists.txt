@@ -16,7 +16,7 @@ set(CMAKE_C_FLAGS "-O0 -g -pedantic")
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 
 # LVGL library
-set(LV_BUILD_CONF_DIR ${SRC_DIR})
+set(LV_BUILD_CONF_DIR ${SRC_DIR} CACHE PATH "")
 set(CONFIG_LV_BUILD_DEMOS Off)
 
 find_program(CCACHE_FOUND ccache)
