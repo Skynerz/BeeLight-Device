@@ -1,11 +1,11 @@
 /**
- * @file   ui.h
+ * @file   Dashboard.hpp
  * @author Tom Coulon
  * @brief  User Interface header file
  */
 
-#ifndef UI_H
-#define UI_H
+#ifndef DASHBOARD_HPP
+#define DASHBOARD_HPP
 /* Includes ------------------------------------------------------------------*/
 #ifndef SIMULATOR
 #include <Arduino.h>
@@ -46,4 +46,4 @@ class Dashboard : public AbstractScreen {
     static void updateNextInstructionIcon(lv_event_t *event = nullptr);
 };
 
-#endif /* UI_H */
+#endif /* DASHBOARD_HPP */
