@@ -68,6 +68,9 @@ jobs:
     - name: Install PlatformIO Core
       run: pip install --upgrade platformio
 
+    - name: use CMake to get lvgl (common dependency)
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSIMULATOR=0 -DBUILD_TESTING=0 ${{inputs.extra-cmake-options}}
+
     - name: Build for SMARTRING
       run: pio run -e SMARTRING
 

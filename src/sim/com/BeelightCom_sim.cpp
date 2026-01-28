@@ -194,7 +194,7 @@ void BeelightCom_sim::processPacket(const CmdFrame &pkt, int peerFd) {
                     response.len    = 5;
                     response.status = 1;
                     snprintf((char *) &response.data.read.varName, 6, "World");
-                    write(peerFd, &response, response.len + 4);
+                    (void) write(peerFd, &response, response.len + 4);
                 }
                 break;
             case CMD_CLOSE:
@@ -205,11 +205,11 @@ void BeelightCom_sim::processPacket(const CmdFrame &pkt, int peerFd) {
                 break;
             case CMD_READ:
                 processReadCommand(pkt, response);
-                write(peerFd, &response, response.len + 4);
+                (void) write(peerFd, &response, response.len + 4);
                 break;
             case CMD_WRITE:
                 processWriteCommand(pkt, response);
-                write(peerFd, &response, response.len + 4);
+                (void) write(peerFd, &response, response.len + 4);
                 break;
             default:
                 logger_m.info("Received unknown command: " + std::to_string(pkt.cmd));
