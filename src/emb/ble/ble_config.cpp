@@ -5,7 +5,9 @@
 #include <BLEUtils.h>
 
 #include "BeeLog.hpp"
+#include "model/NavigationModel.hpp"
 #include "ui/Dashboard.hpp"
+
 #define MAX_IMG_SIZE 16384  // prévoir assez large pour ton PNG 126x126
 
 // BLE global variables
