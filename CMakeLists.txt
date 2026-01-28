@@ -8,6 +8,7 @@ project(${PROJECT_NAME})
 option(SIMULATOR "APPLICATION SIMULATOR BUILD" On)
 option(COM_SIMULATOR "COM SIMULATOR BUILD" Off)
 option(BUILD_TESTING "Build unit-tests" On)
+option(CICD_BUILD "CI/CD build" Off)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O0 -g -pedantic")
@@ -53,6 +54,12 @@ if(SIMULATOR)
             DRAW_STACK_SIZE=32768
             LVGL_CUSTOM_LOG=1
         )
+    elseif(CICD_BUILD)
+        message("CI/CD BUILD")
+         set(CUSTOM_DEFS ${CUSTOM_DEFS}
+            CICD_BUILD=1
+            LV_USE_OS=LV_OS_NONE
+        )
     else()
         message("X11 BUILD")
         set(CUSTOM_DEFS ${CUSTOM_DEFS}
@@ -64,7 +71,6 @@ if(SIMULATOR)
             #INVERT_COLORS=1
         )
     endif()
-    # set_property(GLOBAL PROPERTY HAS_PARENT_SCOPE true)
     if(COM_SIMULATOR)
         message("Communication simulator BUILD")
         add_subdirectory(sim)
@@ -101,17 +107,19 @@ target_compile_definitions(lvgl PRIVATE ${CUSTOM_DEFS})
 if(SIMULATOR AND WIN32)
     target_include_directories(lvgl PRIVATE ${SDL2_INCLUDE_DIRS})
 endif()
-if(SIMULATOR AND WIN32)
-    target_include_directories(lvgl PRIVATE ${SDL2_INCLUDE_DIRS})
-endif()
 target_link_libraries(${PROJECT_NAME} lvgl)
 
 if(SIMULATOR)
+    set(SIM_DEPS lvgl_examples)
     if (WIN32)
-        target_link_libraries(${PROJECT_NAME} SDL2::SDL2-static lvgl_examples ws2_32)
+        set(SIM_DEPS ${SIM_DEPS} SDL2::SDL2-static ws2_32)
     else()
-        target_link_libraries(${PROJECT_NAME} X11 lvgl_examples pthread)
+        set(SIM_DEPS ${SIM_DEPS} pthread)
+        if(NOT CICD_BUILD)
+            set(SIM_DEPS ${SIM_DEPS} X11)
+        endif()
     endif()
+    target_link_libraries(${PROJECT_NAME} ${SIM_DEPS})
     target_link_options(${PROJECT_NAME} PUBLIC LINKER:-Map=${PROJECT_NAME}.map)
 endif()
 

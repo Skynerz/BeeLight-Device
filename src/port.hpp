@@ -1,11 +1,11 @@
 #ifndef PORT_HPP
 #define PORT_HPP
 
-#ifndef __cplusplus
-#include <stdint.h>
+#ifdef __cplusplus
+#include <cstdint>
 extern "C" {
 #else
-#include <cstdint>
+#include <stdint.h>
 #endif
 
 void setup();
@@ -15,7 +15,7 @@ uint16_t getScreenWidth();
 uint16_t getScreenHeight();
 extern uint8_t run;
 
-#ifndef __cplusplus
+#ifdef __cplusplus
 }
 #endif
 

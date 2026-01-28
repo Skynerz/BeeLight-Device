@@ -5,7 +5,7 @@ else()
 endif()
 
 file(GLOB common_src CONFIGURE_DEPENDS "${SRC_DIR}/*.cpp" "${SRC_DIR}/common/*.c*")
-file(GLOB_RECURSE target_src CONFIGURE_DEPENDS "${SRC_DIR}/${TARGET}/*.cpp")
+file(GLOB_RECURSE target_src CONFIGURE_DEPENDS "${SRC_DIR}/${TARGET}/*.c*")
 set(target_inc "${SRC_DIR}/${TARGET}/")
 file(GLOB_RECURSE ui_src CONFIGURE_DEPENDS "${SRC_DIR}/ui/*.cpp")
 file(GLOB_RECURSE ui_res CONFIGURE_DEPENDS "${SRC_DIR}/ui/res/*.c")
