@@ -3,7 +3,6 @@
 
 #ifdef __cplusplus
 #include <cstdint>
-extern "C" {
 #else
 #include <stdint.h>
 #endif
@@ -14,9 +13,5 @@ void _usleep(uint32_t usecs);
 uint16_t getScreenWidth();
 uint16_t getScreenHeight();
 extern uint8_t run;
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
