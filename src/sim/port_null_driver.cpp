@@ -8,6 +8,7 @@ void tearDown() {
 }
 void _usleep(uint32_t usecs) {
 }
+
 uint16_t getScreenWidth() {
     return 360;
 }
