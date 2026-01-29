@@ -3,6 +3,7 @@ name: Beelight-device workflow
 on:
   push:
     branches: [ "main" ]
+
   pull_request:
     types:
       - opened
@@ -11,19 +12,38 @@ on:
 
   workflow_dispatch:
     inputs:
+      do-build-sim:
+        required: true
+        default: false
+        type: boolean
+        description: "Build for sim targets"
+      do-build-emb:
+        required: true
+        default: true
+        type: boolean
+        description: "Build for embedded targets"
       extra-cmake-options:
         required: false
         default: ""
         type: string
         description: "Extra CMake options"
+      retention-days:
+        required: false
+        default: 2
+        type: number
+        description: "Number of days to retain workflow run logs and artifacts"
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
+  BUILD_SIM: true
+  BUILD_EMB: true
+  retention-days: 2
 
 jobs:
   build-sim:
     name: Build for simulator and unit-tests
+    # if: ${{ vars.BUILD_SIM || inputs.do-build-sim }}
     runs-on: ubuntu-latest
 
     steps:
@@ -52,6 +72,7 @@ jobs:
 
   build-emb:
     name: Build for targets
+    # if: ${{ env.BUILD_EMB || inputs.do-build-emb }}
     runs-on: ubuntu-latest
 
     steps:
@@ -76,3 +97,17 @@ jobs:
 
     - name: Build for GUITION_JC3636W518
       run: pio run -e GUITION_JC3636W518
+
+    - name: 'Upload SMARTRING Artifact'
+      uses: actions/upload-artifact@v4
+      with:
+        name: SMARTRING-firmware
+        path: .pio/build/SMARTRING/firmware.bin
+        retention-days: ${{ inputs.retention-days == '' && env.retention-days || inputs.retention-days }}
+
+    - name: 'Upload GUITION_JC3636W518 Artifact'
+      uses: actions/upload-artifact@v4
+      with:
+        name: GUITION_JC3636W518-firmware
+        path: .pio/build/GUITION_JC3636W518/firmware.bin
+        retention-days: ${{ inputs.retention-days == '' && env.retention-days || inputs.retention-days }}
