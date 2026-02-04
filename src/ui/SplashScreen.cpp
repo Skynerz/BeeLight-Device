@@ -2,6 +2,7 @@
 
 #include "ScreenNavigation.hpp"
 #include "ui/Dashboard.hpp"
+#include "model/PersistencyModel.hpp"
 
 void SplashScreen::populate() {
     top_label_m = lv_label_create(obj());
@@ -26,6 +27,15 @@ void SplashScreen::populate() {
 void SplashScreen::onTimerEvent() {
     tick_m++;
     if (tick_m > 2) {  // TBD
-        ScreenNavigation::instance()->navigateTo<Dashboard>(NavigationTransition::TO_LEFT, true);
+        PersistencyModel* persistency = PersistencyModel::instance();
+        if(persistency->getCommissioningStatus()) {
+            getLogger().info("Device already commissioned, navigating to dashboard");
+            ScreenNavigation::instance()->navigateTo<Dashboard>(NavigationTransition::TO_LEFT, true);
+        }
+        else {
+            getLogger().info("Device not commissioned, navigating to commissioning screen");
+            //TODO navigate to commissioning screen
+            ScreenNavigation::instance()->navigateTo<Dashboard>(NavigationTransition::TO_LEFT, true);
+        }
     }
 }

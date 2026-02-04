@@ -30,7 +30,7 @@ endif()
 
 function(addTest)
     add_executable(${ARGV} ${stubs_src})
-    target_compile_definitions(${ARGV0} PRIVATE ${CUSTOM_DEFS})
+    target_compile_definitions(${ARGV0} PRIVATE ${CUSTOM_DEFS} TESTING=1)
     target_link_libraries(${ARGV0} ${LIBRARIES})
     gtest_discover_tests(${ARGV0})
 endfunction()
@@ -53,6 +53,11 @@ addTestLVGL(test_EventLVGL
 addTest(test_ScreenNavigation
     ui/test_ScreenNavigation.cpp
     ${SRC_DIR}/ui/ScreenNavigation.cpp)
+
+addTest(test_port_persistency_sim
+    test_port_persistency_sim.cpp
+    ${SRC_DIR}/sim/port_persistency.c
+    ${SRC_DIR}/sim/port_persistency_int.c)
 
 # addTest(test_NavigationModel
 #     model/test_NavigationModel.cpp

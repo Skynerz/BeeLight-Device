@@ -6,8 +6,8 @@
 
 #include "BeeLog.hpp"
 #include "model/NavigationModel.hpp"
+#include "model/PersistencyModel.hpp"
 #include "ui/Dashboard.hpp"
-
 #define MAX_IMG_SIZE 16384  // prévoir assez large pour ton PNG 126x126
 
 // BLE global variables
@@ -88,7 +88,7 @@ void ble_start_advertising() {
     BLEAdvertising *advertising = BLEDevice::getAdvertising();
 
     BLEAdvertisementData *advData = new BLEAdvertisementData();
-    advData->setName(DEVICE_NAME);
+    advData->setName(PersistencyModel::instance()->getDeviceName().c_str());
     advData->setAppearance(DEVICE_APPEARANCE);
     advData->setFlags(ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT);
 
@@ -105,7 +105,7 @@ void ble_start_advertising() {
 
 // Init BLE service
 void ble_init() {
-    BLEDevice::init(DEVICE_NAME);
+    BLEDevice::init(PersistencyModel::instance()->getDeviceName().c_str());
 
     ble_init_security();
 

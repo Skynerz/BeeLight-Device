@@ -14,19 +14,19 @@ class BeeLog {
     static void warn(std::string tag, std::string message);
     static void error(std::string tag, std::string message);
 
-    void debug(std::string message) {
+    void debug(std::string message) const {
         BeeLog::debug(tag_m, message);
     }
 
-    void info(std::string message) {
+    void info(std::string message) const {
         BeeLog::info(tag_m, message);
     }
 
-    void warn(std::string message) {
+    void warn(std::string message) const {
         BeeLog::warn(tag_m, message);
     }
 
-    void error(std::string message) {
+    void error(std::string message) const {
         BeeLog::error(tag_m, message);
     }
 
