@@ -3,6 +3,7 @@
 #include "BeeLog.hpp"
 #include "Event.hpp"
 #include "model/NavigationModel.hpp"
+#include "model/PersistencyModel.hpp"
 #include "ui/AbstractScreen.hpp"
 #include "ui/ScreenNavigation.hpp"
 #include "ui/SplashScreen.hpp"
@@ -15,6 +16,7 @@
 void BeelightApp::init() {
     BeeLog::debug("BeelightApp", "Initializing Beelight Application");
 
+    (void) PersistencyModel::instance();
     (void) Event::instance();
     (void) NavigationModel::instance();
     (void) ScreenNavigation::instance();
@@ -36,6 +38,7 @@ void BeelightApp::deinit() {
 #ifdef SIMULATOR
     BeelightCom_sim::instance()->uninit();
 #endif
+    PersistencyModel::instance()->uninit();
     run = 0;
 }
 

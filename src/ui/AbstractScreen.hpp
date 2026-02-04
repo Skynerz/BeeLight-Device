@@ -60,6 +60,10 @@ class AbstractScreen {
         return name_m;
     }
 
+    const BeeLog &getLogger() const {
+        return logger_m;
+    }
+    
    private:
     std::string name_m;
     BeeLog logger_m;
