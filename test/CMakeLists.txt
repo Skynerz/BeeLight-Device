@@ -54,11 +54,16 @@ addTest(test_ScreenNavigation
     ui/test_ScreenNavigation.cpp
     ${SRC_DIR}/ui/ScreenNavigation.cpp)
 
+addTest(test_NavigationModel
+    model/test_NavigationModel.cpp
+    ${SRC_DIR}/model/NavigationModel.cpp)
+
+addTest(test_PersistencyModel
+    model/test_PersistencyModel.cpp
+    ${SRC_DIR}/model/PersistencyModel.cpp)
+
 addTest(test_port_persistency_sim
     test_port_persistency_sim.cpp
     ${SRC_DIR}/sim/port_persistency_sim.c
     ${SRC_DIR}/sim/port_persistency_sim_int.c)
 
-# addTest(test_NavigationModel
-#     model/test_NavigationModel.cpp
-#     ${SRC_DIR}/model/NavigationModel.cpp)

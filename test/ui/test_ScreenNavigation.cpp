@@ -142,7 +142,13 @@ TEST(ScreenNavigation, navigate) {
     ScreenNavigation nav;
     GenericScreen *screen = new GenericScreen();
 
-    nav.stackIndex_m = 0;
+    nav.stackIndex_m     = 0;
+    screenLoadAnimCalled = 0;
+    screenLoadCalled     = 0;
+    populateCalled       = 0;
+    onPostPopulateCalled = 0;
+    addEventCbCalled     = 0;
+
     EXPECT_EQ(screenLoadAnimCalled, 0);
     EXPECT_EQ(screenLoadCalled, 0);
     EXPECT_EQ(populateCalled, 0);
