@@ -36,13 +36,11 @@ class Dashboard : public AbstractScreen {
     Dashboard() : AbstractScreen("Dashboard"), directionIcon_m(obj()) {
     }
     void populate() override;
-    void onTimerEvent() override;
     void onPostPopulate() override;
     void onScreenLoaded() override;
 
    private:
     DirectionIconWidget directionIcon_m;
-    uint8_t tick_m{0};
     static void updateNextInstructionIcon(lv_event_t *event = nullptr);
 };
 

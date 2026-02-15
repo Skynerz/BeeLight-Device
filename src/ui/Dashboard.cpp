@@ -184,14 +184,6 @@ void setConnected(const bool connected) {
     lv_label_set_text(connectionStateLabel, connected ? "Conn." : "Disc.");
 }
 
-void Dashboard::onTimerEvent() {
-    tick_m++;
-
-    if (tick_m > 2) {
-        ScreenNavigation::instance()->navigateTo<SplashScreen>(NavigationTransition::FADE_IN, false);
-    }
-}
-
 void Dashboard::onPostPopulate() {
     AbstractScreen::onPostPopulate();
     directionIcon_m.setIcon(NavigationModel::instance()->getNextInstructionIcon());

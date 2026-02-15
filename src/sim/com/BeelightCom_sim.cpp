@@ -23,7 +23,7 @@ void BeelightCom_sim::init() {
     setSimulation(true);
 
     // todo bind ?
-    timer_m = lv_timer_create(&step, 1000, this);
+    timer_m = lv_timer_create(&step, 5000, this);
 
     // first call
     step(timer_m);
