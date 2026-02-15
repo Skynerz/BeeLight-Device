@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "port_persistency_int.h"
+#include "port_persistency_sim_int.h"
 
 void persistency_init() {
     if (config_file == NULL) {

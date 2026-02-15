@@ -24,7 +24,7 @@ else()
     set(LIBRARIES gtest gtest_main common_lib pthread)
     set(LIBRARIES_W_LVGL ${LIBRARIES} lvgl)
     if(NOT CICD_BUILD)
-        set(LIBRARIES_W_LVGL ${LIBRARIES_W_LVGL} x11)
+        set(LIBRARIES_W_LVGL ${LIBRARIES_W_LVGL} X11)
     endif()
 endif()
 
@@ -56,8 +56,8 @@ addTest(test_ScreenNavigation
 
 addTest(test_port_persistency_sim
     test_port_persistency_sim.cpp
-    ${SRC_DIR}/sim/port_persistency.c
-    ${SRC_DIR}/sim/port_persistency_int.c)
+    ${SRC_DIR}/sim/port_persistency_sim.c
+    ${SRC_DIR}/sim/port_persistency_sim_int.c)
 
 # addTest(test_NavigationModel
 #     model/test_NavigationModel.cpp

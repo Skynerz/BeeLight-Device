@@ -21,6 +21,10 @@ uint8_t PersistencyModel::getCommissioningStatus() {
     if (getU8Value(COMMISSIONNING_STATUS, result)) {
         return result;
     }
+    else {
+        logger_m.warn("Commissioning status not found, writing default value");
+        setCommissioningStatus(0);
+    }
     return 0;
 }
 
