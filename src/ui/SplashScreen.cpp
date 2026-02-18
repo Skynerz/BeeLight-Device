@@ -2,6 +2,7 @@
 
 #include "ScreenNavigation.hpp"
 #include "ui/Dashboard.hpp"
+#include "ui/commissionning/CommissionScreens.hpp"
 #include "model/PersistencyModel.hpp"
 
 void SplashScreen::populate() {
@@ -26,7 +27,7 @@ void SplashScreen::populate() {
 
 void SplashScreen::onTimerEvent() {
     tick_m++;
-    if (tick_m > 2) {  // TBD
+    if (tick_m > 1) {  // TBD
         PersistencyModel* persistency = PersistencyModel::instance();
         if(persistency->getCommissioningStatus()) {
             getLogger().info("Device already commissioned, navigating to dashboard");
