@@ -32,6 +32,11 @@ class AbstractScreen {
         connections_m.clear();
     }
 
+    /**
+     * @brief Override this class for custom screen context.
+     */
+    struct Context {};
+
     void connect(lv_obj_t *obj, uint8_t eventId, lv_event_cb_t cb, void *data = nullptr) {
         Event::instance()->connect(obj, eventId, cb, data);
         connections_m.push_back(ScreenEvent{obj, eventId, cb, data});
@@ -49,6 +54,14 @@ class AbstractScreen {
     }
 
     virtual void onScreenLoaded() {
+        // Nothing to do
+    }
+
+    /**
+     * Override this method to set the context for the screen. The context can be used to pass data between screens.
+     * @param context The context to set for the screen.
+     */
+    virtual void setContext(const Context* context) {
         // Nothing to do
     }
 
