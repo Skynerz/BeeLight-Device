@@ -21,7 +21,9 @@ void setup() {
 
     logger.info("Initializing LVGL");
     // let the hw invert colors
-    // board->getLCD()->invertColor(true);
+    #ifdef INVERT_COLOR
+board->getLCD()->invertColor(true);
+#endif
     lv_display_t* disp = nullptr;
     lvgl_port_init(board->getLCD(), board->getTouch(), &disp);
 
