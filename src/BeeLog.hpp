@@ -9,24 +9,24 @@ class BeeLog {
         init();
     }
 
-    static void debug(std::string tag, std::string message);
-    static void info(std::string tag, std::string message);
-    static void warn(std::string tag, std::string message);
-    static void error(std::string tag, std::string message);
+    static void debug(const std::string& tag, const std::string& message);
+    static void info(const std::string& tag, const std::string& message);
+    static void warn(const std::string& tag, const std::string& message);
+    static void error(const std::string& tag, const std::string& message);
 
-    void debug(std::string message) const {
+    void debug(const std::string& message) const {
         BeeLog::debug(tag_m, message);
     }
 
-    void info(std::string message) const {
+    void info(const std::string& message) const {
         BeeLog::info(tag_m, message);
     }
 
-    void warn(std::string message) const {
+    void warn(const std::string& message) const {
         BeeLog::warn(tag_m, message);
     }
 
-    void error(std::string message) const {
+    void error(const std::string& message) const {
         BeeLog::error(tag_m, message);
     }
 

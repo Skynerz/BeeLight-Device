@@ -21,18 +21,18 @@ void BeeLog::init() {
 #endif
 }
 
-void BeeLog::debug(std::string tag, std::string message) {
+void BeeLog::debug(const std::string& tag, const std::string& message) {
     std::cout << "[D]-" << tag << "- " << message << std::endl;
 }
 
-void BeeLog::info(std::string tag, std::string message) {
+void BeeLog::info(const std::string& tag, const std::string& message) {
     std::cout << "[I]-" << tag << "- " << message << std::endl;
 }
 
-void BeeLog::warn(std::string tag, std::string message) {
+void BeeLog::warn(const std::string& tag, const std::string& message) {
     std::cout << "[W]-" << tag << "- " << message << std::endl;
 }
 
-void BeeLog::error(std::string tag, std::string message) {
+void BeeLog::error(const std::string& tag, const std::string& message) {
     std::cerr << "[E]-" << tag << "- " << message << std::endl;
 }
