@@ -439,3 +439,42 @@ bool lvgl_port_deinit(void) {
 
     return true;
 }
+
+/* LV MEM */
+void lv_mem_init(void)
+{
+    return; /*Nothing to init*/
+}
+
+void lv_mem_deinit(void)
+{
+    return; /*Nothing to deinit*/
+}
+
+void * lv_malloc_core(size_t size)
+{
+    return heap_caps_malloc(size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+}
+
+void * lv_realloc_core(void * p, size_t new_size)
+{
+    return heap_caps_realloc(p, new_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+}
+
+void lv_free_core(void * p)
+{
+    heap_caps_free(p);
+}
+
+void lv_mem_monitor_core(lv_mem_monitor_t * mon_p)
+{
+    /*Not supported*/
+    LV_UNUSED(mon_p);
+    return;
+}
+
+lv_result_t lv_mem_test_core(void)
+{
+    /*Not supported*/
+    return LV_RESULT_OK;
+}

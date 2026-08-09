@@ -10,22 +10,23 @@
 using namespace esp_panel::drivers;
 using namespace esp_panel::board;
 
-static Board* board;
+static Board board;
 void setup() {
     BeeLog logger("Port Arduino");
     logger.info("Initializing board");
 
-    board = new Board();
-    ESP_UTILS_CHECK_FALSE_EXIT(board->init(), "Board init failed");
-    ESP_UTILS_CHECK_FALSE_EXIT(board->begin(), "Board begin failed");
+    ESP_UTILS_CHECK_FALSE_EXIT(board.init(), "Board init failed");
+    ESP_UTILS_CHECK_FALSE_EXIT(board.begin(), "Board begin failed");
+
+    logger.info(psramFound() ? "PSRAM found" : "PSRAM not found");
 
     logger.info("Initializing LVGL");
     // let the hw invert colors
     #ifdef INVERT_COLOR
-board->getLCD()->invertColor(true);
+    board.getLCD()->invertColor(true);
 #endif
     lv_display_t* disp = nullptr;
-    lvgl_port_init(board->getLCD(), board->getTouch(), &disp);
+    lvgl_port_init(board.getLCD(), board.getTouch(), &disp);
 
     logger.info("Creating UI");
     /* Lock the mutex due to the LVGL APIs are not thread-safe */
@@ -46,9 +47,9 @@ void _usleep(uint32_t usecs) {
 }
 
 uint16_t getScreenWidth() {
-    return board->getLCD()->getFrameWidth();
+    return board.getLCD()->getFrameWidth();
 }
 
 uint16_t getScreenHeight() {
-    return board->getLCD()->getFrameHeight();
+    return board.getLCD()->getFrameHeight();
 }
