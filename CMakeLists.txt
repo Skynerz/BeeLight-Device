@@ -19,6 +19,7 @@ set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 # LVGL library
 set(LV_BUILD_CONF_DIR ${SRC_DIR} CACHE PATH "")
 set(CONFIG_LV_BUILD_DEMOS Off)
+set(CONFIG_LV_USE_THORVG_INTERNAL Off)
 
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
@@ -33,7 +34,7 @@ if(SIMULATOR)
         MEMSIZE_KB=96
         CONFIG_LV_USE_SYSMON=1
         CONFIG_LV_USE_MEM_MONITOR=1
-        CONFIG_LV_USE_PERF_MONITOR=1
+        CONFIG_LV_USE_PERF_MONITOR=1    
     )
     if (WIN32)
     # built ok with https://github.com/niXman/mingw-builds-binaries/releases
@@ -97,9 +98,10 @@ message("Make LVGL available done")
 add_subdirectory(src)
 add_subdirectory(assets)
 
+set(LVGL_SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/libs/lvgl/src)
 add_executable(${PROJECT_NAME} ${source_files})
 target_include_directories(${PROJECT_NAME} PRIVATE ${include_files} ${SRC_DIR} ${ADDITIONAL_INCLUDES} ${CMAKE_SOURCE_DIR})
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/libs/lvgl/src)
+target_include_directories(${PROJECT_NAME} PRIVATE ${LVGL_SRC_DIR})
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${CUSTOM_DEFS})
 
 #LVGL BUILD
@@ -107,7 +109,10 @@ target_compile_definitions(lvgl PRIVATE ${CUSTOM_DEFS})
 if(SIMULATOR AND WIN32)
     target_include_directories(lvgl PRIVATE ${SDL2_INCLUDE_DIRS})
 endif()
-target_link_libraries(${PROJECT_NAME} lvgl)
+# LVGL port
+add_library(lvgl_port src/sim/lvgl_mem_port.c)
+target_include_directories(lvgl_port PRIVATE ${LVGL_SRC_DIR} ${SRC_DIR})
+target_link_libraries(lvgl PUBLIC lvgl_port)
 
 if(SIMULATOR)
     set(SIM_DEPS lvgl_examples)
