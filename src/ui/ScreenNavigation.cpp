@@ -24,6 +24,7 @@ void ScreenNavigation::back(NavigationTransition transition) {
 }
 
 void ScreenNavigation::onTimerEvent() {
+    top()->incrementTick();
     top()->onTimerEvent();
 }
 

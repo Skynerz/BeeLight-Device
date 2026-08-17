@@ -7,11 +7,6 @@
 #include "ui/AbstractScreen.hpp"
 #include "ui/ScreenNavigation.hpp"
 #include "ui/SplashScreen.hpp"
-#ifdef SIMULATOR
-#include "sim/com/BeelightCom_sim.hpp"
-#else
-#include "emb/ble/ble_config.h"
-#endif
 
 void BeelightApp::init() {
     BeeLog::debug("BeelightApp", "Initializing Beelight Application");
@@ -20,11 +15,10 @@ void BeelightApp::init() {
     (void) Event::instance();
     (void) NavigationModel::instance();
     (void) ScreenNavigation::instance();
-#ifdef SIMULATOR
-    (void) BeelightCom_sim::instance()->init();
-#else
-    ble_init();
-#endif
+    auto comInstance = getComInstance();
+    comInstance->registerEvents();
+    comInstance->init();
+
     ScreenNavigation::instance()->navigateTo<SplashScreen>();
     timer_m = lv_timer_create(
         [](lv_timer_t *timer) {
@@ -35,9 +29,7 @@ void BeelightApp::init() {
 }
 
 void BeelightApp::deinit() {
-#ifdef SIMULATOR
-    BeelightCom_sim::instance()->uninit();
-#endif
+    getComInstance()->uninit();
     PersistencyModel::instance()->uninit();
     run = 0;
 }

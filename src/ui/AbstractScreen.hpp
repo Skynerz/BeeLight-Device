@@ -13,7 +13,7 @@ struct Context {};
 
 class AbstractScreen {
    public:
-    AbstractScreen(const std::string name = "AbstractScreen") : name_m(name), logger_m(name) {
+    AbstractScreen(const std::string name = "AbstractScreen") : name_m(name), logger_m(name), tick_m(0) {
         logger_m.debug("Constructor");
         screen_m = lv_obj_create(NULL);
 #ifdef SIMULATOR
@@ -37,9 +37,32 @@ class AbstractScreen {
      */
     struct Context {};
 
+    /**
+     * @brief   Connect event to callback
+     * @param   obj
+     * @param   eventId
+     * @param   callback
+     * @param   data
+     */
     void connect(lv_obj_t *obj, uint8_t eventId, lv_event_cb_t cb, void *data = nullptr) {
         Event::instance()->connect(obj, eventId, cb, data);
         connections_m.push_back(ScreenEvent{obj, eventId, cb, data});
+    }
+
+    /**
+     * @brief   Increment screen's tick
+     */
+    void incrementTick() {
+        tick_m++;
+    }
+
+    /**
+     * @brief   Get current screen's tick
+     * @return  tick
+     * @note    only if displayed
+     */
+    uint32_t getTick() {
+        return tick_m;
     }
 
     virtual void populate() = 0;
@@ -61,7 +84,7 @@ class AbstractScreen {
      * Override this method to set the context for the screen. The context can be used to pass data between screens.
      * @param context The context to set for the screen.
      */
-    virtual void setContext(const Context* context) {
+    virtual void setContext(const Context *context) {
         // Nothing to do
     }
 
@@ -76,12 +99,13 @@ class AbstractScreen {
     const BeeLog &getLogger() const {
         return logger_m;
     }
-    
+
    private:
     std::string name_m;
     BeeLog logger_m;
     lv_obj_t *screen_m;
     lv_obj_t *screenBg_m;
+    uint32_t tick_m;
     struct ScreenEvent {
         lv_obj_t *obj;
         uint8_t eventId;

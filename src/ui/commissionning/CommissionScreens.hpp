@@ -14,10 +14,23 @@ class CommissionStartScreen : public AbstractScreen {
     static void onNextButtonClicked(lv_event_t* event);
 };
 
-class CommissionBleConfigScreen : public UserInputScreen {
+class CommissionDeviceNameConfigScreen : public UserInputScreen {
    public:
-    CommissionBleConfigScreen() : UserInputScreen("CommissionBleConfigScreen") {
+    CommissionDeviceNameConfigScreen() : UserInputScreen("CommissionDeviceNameConfigScreen") {
     }
+};
+
+class CommissionConnWaitingScreen : public AbstractScreen {
+   public:
+    CommissionConnWaitingScreen()
+        : AbstractScreen("CommissionDeviceNameConfigScreen"), is_advertising_started_m(false) {
+    }
+    void populate() override;
+    void onTimerEvent() override;
+
+   private:
+    bool is_advertising_started_m;
+    void displayPinCode();
 };
 
 class CommissionFinishScreen : public AbstractScreen {

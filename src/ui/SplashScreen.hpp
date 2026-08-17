@@ -16,7 +16,6 @@ class SplashScreen : public AbstractScreen {
     DirectionIconWidget icon_m;
     lv_obj_t* top_label_m;
     lv_obj_t* status_label_m;
-    uint8_t tick_m{0};
 };
 
 #endif

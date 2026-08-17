@@ -9,7 +9,7 @@
 class NavigationModel {
    public:
     enum NavigationEvents : uint8_t {
-        EVENT_CURRENT_TIME_UPDATED = 1,
+        EVENT_CURRENT_TIME_UPDATED = Event::EVENT_NAVIGATION,
         EVENT_EST_TIME_ARRIVAL_UPDATED,
         EVENT_EST_DISTANCE_ARRIVAL_UPDATED,
         EVENT_ARRIVING_TIME_UPDATED,

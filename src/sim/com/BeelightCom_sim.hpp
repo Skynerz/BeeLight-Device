@@ -16,24 +16,15 @@
 #include "Frame.hpp"
 #include "com/BeelightCom.hpp"
 
-class BeelightCom_sim : public BeelightCom {
+class BeelightCom_Impl : public BeelightCom {
    public:
-    static BeelightCom_sim *instance() {
-        static BeelightCom_sim *instance = nullptr;
-        if (instance == nullptr) {
-            instance = new BeelightCom_sim();
-        }
-        return instance;
-    }
-
-    ~BeelightCom_sim() override {
+    ~BeelightCom_Impl() override {
         uninit();
     }
+
     void init() override;
     void uninit() override;
-    void serverInit();
     void serverStep();
-
     void setSimulation(bool enable) {
         simulationEnabled_m = enable;
     }
@@ -42,7 +33,14 @@ class BeelightCom_sim : public BeelightCom {
     }
     void simulationStep();
 
+    void start_advertising() override;
+    void stop_advertising() override;
+    bool is_connected() override {
+        return clientConnected;
+    }
+
    private:
+    void serverInit();
     void processPacket(const CmdFrame &pkt, int peerFd);
     void initReadCommand();
     void processReadCommand(const CmdFrame &inPkt, CmdFrame &outPkt);

@@ -1,4 +1,5 @@
 #include "SplashScreen.hpp"
+#include "BeelightApp.hpp"
 
 #include "Dashboard.hpp"
 #include "ScreenNavigation.hpp"
@@ -27,16 +28,15 @@ void SplashScreen::populate() {
 }
 
 void SplashScreen::onTimerEvent() {
-    tick_m++;
-    if (tick_m > 0) {  // TBD
+    if (getTick() > 0) {
         PersistencyModel* persistency = PersistencyModel::instance();
         persistency->setCommissioningStatus(false);
         if (persistency->getCommissioningStatus()) {
             getLogger().info("Device already commissioned, navigating to dashboard");
+            BeelightApp::getComInstance()->start_advertising();
             ScreenNavigation::instance()->navigateTo<Dashboard>(NavigationTransition::TO_LEFT, true);
         } else {
             getLogger().info("Device not commissioned, navigating to commissioning screen");
-            // TODO navigate to commissioning screen
             ScreenNavigation::instance()->navigateTo<CommissionStartScreen>(NavigationTransition::TO_LEFT, true);
         }
     }

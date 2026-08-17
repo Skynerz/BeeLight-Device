@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include <ctime>
+#include <thread>
 
 #include "model/NavigationModel.hpp"
 #if __WIN32__
@@ -14,8 +15,8 @@
 #include <poll.h>
 #endif
 
-void BeelightCom_sim::init() {
-    logger_m.info("BeelightCom_sim init");
+void BeelightCom_Impl::init() {
+    logger_m.info("BeelightCom_Impl init");
 
     initReadCommand();
     initWriteCommand();
@@ -29,13 +30,13 @@ void BeelightCom_sim::init() {
     step(timer_m);
 }
 
-void BeelightCom_sim::uninit() {
-    logger_m.info("BeelightCom_sim uninit");
+void BeelightCom_Impl::uninit() {
+    logger_m.info("BeelightCom_Impl uninit");
     lv_timer_delete(timer_m);
     close(socket_m);
 }
 
-void BeelightCom_sim::serverInit() {
+void BeelightCom_Impl::serverInit() {
 #if __WIN32__
     WSADATA wsaData;
     int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -113,7 +114,7 @@ void BeelightCom_sim::serverInit() {
 #endif
 }
 
-void BeelightCom_sim::serverStep() {
+void BeelightCom_Impl::serverStep() {
 #if !__WIN32__
     CmdFrame pkt;
     struct timeval tv;
@@ -179,7 +180,7 @@ void BeelightCom_sim::serverStep() {
 #endif
 }
 
-void BeelightCom_sim::processPacket(const CmdFrame &pkt, int peerFd) {
+void BeelightCom_Impl::processPacket(const CmdFrame &pkt, int peerFd) {
     CmdFrame response{
         .type   = 0,
         .cmd    = pkt.cmd,
@@ -218,7 +219,7 @@ void BeelightCom_sim::processPacket(const CmdFrame &pkt, int peerFd) {
     }
 }
 
-void BeelightCom_sim::initReadCommand() {
+void BeelightCom_Impl::initReadCommand() {
     readCb_m["CurrentTime"] = []() {
         return NavigationModel::instance()->getCurrentTime();
     };
@@ -239,7 +240,7 @@ void BeelightCom_sim::initReadCommand() {
     };
 }
 
-void BeelightCom_sim::processReadCommand(const CmdFrame &inPkt, CmdFrame &outPkt) {
+void BeelightCom_Impl::processReadCommand(const CmdFrame &inPkt, CmdFrame &outPkt) {
     std::string varName = std::string(inPkt.data.read.varName);
     if (readCb_m.find(varName) != readCb_m.end()) {
         std::string value = readCb_m[varName]();
@@ -253,7 +254,7 @@ void BeelightCom_sim::processReadCommand(const CmdFrame &inPkt, CmdFrame &outPkt
     }
 }
 
-void BeelightCom_sim::initWriteCommand() {
+void BeelightCom_Impl::initWriteCommand() {
     writeCb_m["CurrentTime"] = [this](std::string value) {
         logger_m.debug("Setting CurrentTime to " + value);
         NavigationModel::instance()->setCurrentTime(value);
@@ -280,7 +281,7 @@ void BeelightCom_sim::initWriteCommand() {
     };
 }
 
-void BeelightCom_sim::processWriteCommand(const CmdFrame &inPkt, CmdFrame &outPkt) {
+void BeelightCom_Impl::processWriteCommand(const CmdFrame &inPkt, CmdFrame &outPkt) {
     std::string varName = std::string(inPkt.data.write.varName);
     char c_value[256]   = {0};
     strncpy(c_value, (const char *) inPkt.data.write.data, inPkt.len - sizeof(inPkt.data.write.varName));
@@ -299,7 +300,7 @@ void BeelightCom_sim::processWriteCommand(const CmdFrame &inPkt, CmdFrame &outPk
 void step(lv_timer_t *timer) {
     static int dirIndex = 0;
     /*Use the user_data*/
-    BeelightCom_sim *user_data = (BeelightCom_sim *) lv_timer_get_user_data(timer);
+    BeelightCom_Impl *user_data = (BeelightCom_Impl *) lv_timer_get_user_data(timer);
     if (user_data) {
         auto logger = user_data->getLogger();
 
@@ -311,7 +312,7 @@ void step(lv_timer_t *timer) {
     }
 }
 
-void BeelightCom_sim::simulationStep() {
+void BeelightCom_Impl::simulationStep() {
     static uint8_t dirIndex;
     static bool init               = true;
     const std::string directions[] = {"droite", "gauche", "tout droit", "arrive"};
@@ -352,3 +353,20 @@ void BeelightCom_sim::simulationStep() {
         instructionIcon = (instructionIcon + 1) % InstructionIcon::Values::NAME_CHANGE;
     }
 }
+
+static std::thread advThread;
+void BeelightCom_Impl::start_advertising(void) {
+    advThread = std::thread([this]() {
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+        BeeLog::debug("bleSim", "start_advertising");
+        clientConnected = true;
+        auto event     = Event::instance();
+        event->emit(BleEvents::EVENT_BLE_CONNECTED);
+    });
+    advThread.detach();
+}
+
+void BeelightCom_Impl::stop_advertising() {
+    logger_m.info("stop_advertising");
+}
+

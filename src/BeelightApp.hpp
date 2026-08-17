@@ -5,6 +5,12 @@
 
 #include "ui/ScreenNavigation.hpp"
 
+#ifdef SIMULATOR
+#include "sim/com/BeelightCom_sim.hpp"
+#else
+#include "emb/com/BeelightCom_emb.hpp"
+#endif
+
 class BeelightApp {
    public:
     static BeelightApp *instance() {
@@ -15,7 +21,16 @@ class BeelightApp {
         return instance;
     }
 
+    static BeelightCom *getComInstance() {
+        static BeelightCom *instance;
+        if (instance == nullptr) {
+            instance = new BeelightCom_Impl();
+        }
+        return instance;
+    }
+
     void timerEvent();
+
 
    private:
     BeelightApp() {
