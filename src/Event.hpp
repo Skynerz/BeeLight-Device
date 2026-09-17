@@ -24,6 +24,9 @@ class Event {
     void connect(lv_obj_t *obj, uint8_t eventId, lv_event_cb_t cb, void *data = nullptr);
     void disconnect(lv_obj_t *obj, uint8_t eventId, lv_event_cb_t cb);
 
+    static constexpr uint8_t EVENT_NAVIGATION = 0;
+    static constexpr uint8_t EVENT_BLE        = 0x10;
+
    private:
     // internal id to LVGL event
     using EventHandler = std::pair<uint32_t, lv_obj_t *>;

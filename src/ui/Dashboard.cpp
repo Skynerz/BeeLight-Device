@@ -3,6 +3,7 @@
 #include <lvgl.h>
 #include <string.h>
 
+#include "BeelightApp.hpp"
 #include "ScreenNavigation.hpp"
 #include "SplashScreen.hpp"
 #include "model/NavigationModel.hpp"
@@ -57,6 +58,10 @@ static void updateDirection(lv_event_t *event = nullptr) {
 static void updateDirectionDistanceLabel(lv_event_t *event = nullptr) {
     lv_label_set_text(directionDistanceLabel,
                       NavigationModel::instance()->getRemainingDistanceBeforeNextInstruction().c_str());
+}
+
+static void updateConnectionState(lv_event_t *event = nullptr) {
+    lv_label_set_text(connectionStateLabel, BeelightApp::getComInstance()->is_connected() ? "Conn." : "Disc.");
 }
 
 void Dashboard::updateNextInstructionIcon(lv_event_t *event) {
@@ -131,10 +136,12 @@ void Dashboard::populate() {
 
     // Connection state label
     connectionStateLabel = lv_label_create(obj());
-    lv_label_set_text(connectionStateLabel, "Disc.");
+    updateConnectionState();
     lv_obj_set_style_text_align(connectionStateLabel, LV_TEXT_ALIGN_LEFT, 0);
     lv_obj_set_style_text_font(connectionStateLabel, &lv_font_montserrat_20, 0);
     lv_obj_align(connectionStateLabel, LV_ALIGN_LEFT_MID, 10, 0);
+    connect(connectionStateLabel, BleEvents::EVENT_BLE_CONNECTED, &updateConnectionState);
+    connect(connectionStateLabel, BleEvents::EVENT_BLE_DISCONNECTED, &updateConnectionState);
 }
 
 // void copy_and_invert_colors_rgba(uint8_t* bufIn, uint8_t* bufOut, uint32_t
@@ -145,44 +152,6 @@ void Dashboard::populate() {
 //         bufOut[4*i + 2] = 255 - bufIn[4*i + 2]; // B
 //     }
 // }
-
-void setDirectionIcon(const uint8_t *iconData, size_t iconSize) {
-    // Libérer l'ancien buffer si existant
-    delete[] iconCopy;
-
-    // Allouer et copier
-    iconCopy = new uint8_t[iconSize];
-    memcpy(iconCopy, iconData, iconSize);
-    // copy_and_invert_colors_rgba((uint8_t*)iconData, iconCopy, iconSize / 4);
-
-    // Remplir le descripteur
-    // directionIconPng.header.always_zero = 0;
-
-    // directionIconPng.header.w = 0;
-    // directionIconPng.header.h = 0;
-    // directionIconPng.header.cf = LV_COLOR_FORMAT_RAW_ALPHA;
-    // directionIconPng.data_size = iconSize;
-    // directionIconPng.data = iconCopy;
-
-    // DEBUG
-    // ----------------------------------------------------------------------
-    // Serial.printf("Icon updated, size: %u bytes\n",
-    // directionIconPng.data_size); for(uint16_t i = 0; i <
-    // directionIconPng.data_size; i++) {
-    //     Serial.printf("%02X ", iconCopy[i]);
-    // }
-    // DEBUG
-    // ----------------------------------------------------------------------
-
-    // Mise à jour dans le contexte LVGL
-    // lv_async_call([](void *)
-    //               { lv_img_set_src(directionIcon, &directionIconPng); },
-    //               nullptr);
-}
-
-void setConnected(const bool connected) {
-    lv_label_set_text(connectionStateLabel, connected ? "Conn." : "Disc.");
-}
 
 void Dashboard::onPostPopulate() {
     AbstractScreen::onPostPopulate();

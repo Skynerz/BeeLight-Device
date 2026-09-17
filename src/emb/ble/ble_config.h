@@ -39,5 +39,10 @@ static uint16_t DEVICE_APPEARANCE = 0x1442;
 
 /* Exported function prototypes ----------------------------------------------*/
 void ble_init(void);
+void ble_start_advertising();
+void ble_stop_advertising();
+bool ble_is_connected();
+void ble_set_pin(uint32_t);
+bool ble_get_pin(uint32_t&);
 
 #endif /* BLE_CONFIG_H */

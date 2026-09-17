@@ -26,11 +26,6 @@ using String = std::string;  // todo
 
 /* Exported function prototypes ----------------------------------------------*/
 
-// Setters
-void setDirectionIcon(const uint8_t *iconData, size_t iconSize);
-
-void setConnected(const bool connected);
-
 class Dashboard : public AbstractScreen {
    public:
     Dashboard() : AbstractScreen("Dashboard"), directionIcon_m(obj()) {

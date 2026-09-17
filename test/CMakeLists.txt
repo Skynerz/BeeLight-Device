@@ -54,6 +54,10 @@ addTest(test_ScreenNavigation
     ui/test_ScreenNavigation.cpp
     ${SRC_DIR}/ui/ScreenNavigation.cpp)
 
+addTest(test_UserInputScreen
+    ui/test_UserInputScreen.cpp
+    ${SRC_DIR}/ui/UserInputScreen.cpp)
+
 addTest(test_NavigationModel
     model/test_NavigationModel.cpp
     ${SRC_DIR}/model/NavigationModel.cpp)

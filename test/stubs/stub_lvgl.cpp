@@ -4,6 +4,16 @@ uint8_t screenLoadAnimCalled = 0;
 uint8_t screenLoadCalled     = 0;
 uint8_t addEventCbCalled     = 0;
 
+const lv_font_t lv_font_montserrat_28 = {};
+
+const lv_font_t lv_font_montserrat_26 = {};
+
+const lv_font_t lv_font_montserrat_20 = {};
+
+const lv_font_t lv_font_montserrat_30 = {};
+
+const lv_font_t lv_font_montserrat_42 = {};
+
 void __attribute__((weak)) lv_screen_load_anim(lv_obj_t *, lv_screen_load_anim_t, uint32_t, uint32_t, bool) {
     screenLoadAnimCalled++;
 }
@@ -46,4 +56,65 @@ lv_event_dsc_t *__attribute__((weak)) lv_obj_add_event_cb(lv_obj_t *, lv_event_c
 
 void *__attribute__((weak)) lv_event_get_user_data(lv_event_t *e) {
     return NULL;
+}
+
+void __attribute__((weak)) lv_label_set_text(lv_obj_t *obj, const char *text) {
+}
+
+void __attribute__((weak)) lv_obj_set_width(lv_obj_t * obj, int32_t w) {
+}
+
+int32_t __attribute__((weak)) lv_obj_get_width(const lv_obj_t *obj) {
+    return 0;
+}
+
+lv_obj_t *__attribute__((weak)) lv_label_create(lv_obj_t *parent) {
+    return (lv_obj_t*) 0x1234567;
+}
+
+void __attribute__((weak)) lv_obj_align(lv_obj_t *obj, lv_align_t align, int32_t x_ofs, int32_t y_ofs) {
+}
+
+void __attribute__((weak)) lv_obj_set_style_text_font(lv_obj_t *obj, const lv_font_t *value,
+                                                      lv_style_selector_t selector) {
+                                                        
+}
+
+int32_t __attribute__((weak)) lv_obj_get_scroll_x(const lv_obj_t *obj) {
+    return 0;
+}
+
+lv_obj_t *__attribute__((weak)) lv_event_get_current_target_obj(lv_event_t *e) {
+    return nullptr;
+}
+
+lv_obj_t *__attribute__((weak)) lv_button_create(lv_obj_t *parent) {
+    return nullptr;
+}
+
+void __attribute__((weak)) lv_obj_set_scrollbar_mode(lv_obj_t *obj, lv_scrollbar_mode_t mode) {
+}
+
+void __attribute__((weak)) lv_obj_set_scroll_dir(lv_obj_t *obj, lv_dir_t dir) {
+}
+
+void __attribute__((weak)) lv_obj_set_scroll_snap_x(lv_obj_t *obj, lv_scroll_snap_t align) {
+}
+
+void __attribute__((weak)) lv_obj_set_flag(lv_obj_t *obj, lv_obj_flag_t f, bool v) {
+}
+
+void __attribute__((weak)) lv_obj_set_style_text_align(lv_obj_t * obj, lv_text_align_t value, lv_style_selector_t selector) {
+}
+
+void __attribute__((weak)) lv_label_set_long_mode(lv_obj_t * obj, lv_label_long_mode_t long_mode) {
+}
+
+void __attribute__((weak)) lv_obj_set_style_border_opa(lv_obj_t * obj, lv_opa_t value, lv_style_selector_t selector) {
+}
+
+void __attribute__((weak)) lv_obj_set_style_bg_opa(lv_obj_t * obj, lv_opa_t value, lv_style_selector_t selector) {
+}
+
+void __attribute__((weak)) lv_obj_remove_flag(lv_obj_t * obj, lv_obj_flag_t f) {
 }

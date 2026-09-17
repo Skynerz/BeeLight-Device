@@ -23,12 +23,22 @@ class ScreenNavigation {
         return instance;
     }
 
+    /**
+     * Navigate to the next screen (derives AbstractScreen)
+     * @param NextScreen The next screen to navigate to.
+     * @param transition The transition to use when navigating to the next screen.
+     * @param clearHistory Whether to clear the navigation history when navigating to the next screen.
+     * @param context The context to set for the next screen. (copy)
+     */
     template <typename NextScreen,
               typename std::enable_if<std::is_base_of<AbstractScreen, NextScreen>::value>::type * = nullptr>
-    void navigateTo(NavigationTransition transition = FADE_IN, bool clearHistory = false) {
+    void navigateTo(NavigationTransition transition = FADE_IN, bool clearHistory = false, AbstractScreen::Context* context = nullptr) {
         if (stackIndex_m < HISTORY_DEPTH) {
             ScreenInstanciator instanciator = createInstance<NextScreen>;
             AbstractScreen *newScreen       = instanciator();
+            if(context) {
+                newScreen->setContext(context);
+            }
             logger_m.debug("navigateTo " + newScreen->getName() + " stackIndex_m=" + std::to_string(stackIndex_m));
             navigate(newScreen, transition);
             destroyInstance(&topScreen_m);
@@ -41,6 +51,7 @@ class ScreenNavigation {
             logger_m.warn("History is full");
         }
     }
+
 
     void back(NavigationTransition transition = NORMAL);
     void onTimerEvent();
