@@ -11,6 +11,12 @@ typedef lv_color16_t color_t;
 typedef lv_color_t color_t;
 #endif
 
+#ifndef SIMULATOR
+#define RGB565_SWAP(buf, sz) lv_draw_sw_rgb565_swap(buz, sz)
+#else
+#define RGB565_SWAP(buf, sz)
+#endif
+
 FlushFb_t s_flush;
 
 void fb_flush_compute_area(const lv_area_t *area, int32_t *width, int32_t *height) {
@@ -55,11 +61,11 @@ void fb_flush_callback(lv_display_t *drv, const lv_area_t *area, uint8_t *px_map
     lv_area_t flush_area;
     int32_t flush_width, flush_height;
     memcpy(&flush_area, area, sizeof(lv_area_t));
-
+    
     if ((s_flush.x_coord_align > 1) || (s_flush.y_coord_align > 1)) {
         rounder_callback(&flush_area);
     }
-
+    
     fb_flush_compute_area(&flush_area, &flush_width, &flush_height);
     uint8_t flushAreaTooBig = ((flush_width * flush_height) > s_flush.bufSize ? 1 : 0);
     if (((width >= flush_width) && (height >= flush_height)) || flushAreaTooBig)  // same size or too big
@@ -68,6 +74,7 @@ void fb_flush_callback(lv_display_t *drv, const lv_area_t *area, uint8_t *px_map
             beelog_print(BEELOG_LEVEL_WARN, __FILE__, "area to flush is bigger than internal buffer %dx%d", flush_width,
                          flush_height);
         }
+        RGB565_SWAP(px_map, PX_SIZE(width * height));
         s_flush.ll_flush_cb(drv, area, px_map);
     } else {
         // write into internal framebuffer
@@ -98,6 +105,7 @@ void fb_flush_callback(lv_display_t *drv, const lv_area_t *area, uint8_t *px_map
             }
             dst_data += flush_width;
         }
+        RGB565_SWAP(px_map, PX_SIZE(flush_width * flush_height));
         s_flush.ll_flush_cb(drv, &flush_area, px_map);
     }
 

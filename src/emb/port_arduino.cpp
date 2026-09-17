@@ -22,7 +22,7 @@ void setup() {
 
     logger.info("Initializing LVGL");
     // let the hw invert colors
-    #ifdef INVERT_COLOR
+#ifdef INVERT_COLOR
     board.getLCD()->invertColor(true);
 #endif
     lv_display_t* disp = nullptr;
